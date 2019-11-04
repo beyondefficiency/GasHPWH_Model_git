@@ -197,44 +197,44 @@ elif Type_DrawProfile == 'GTI_Field': #Performs this code if the draw profile da
 
 #The following code simulates the performance of the gas HPWH across different draw profiles
 #Initializes a bunch of values at either 0 or initial temperature. They will be overwritten later as needed
-#Model['Tank Temperature (deg F)'] = 0
-#Model.loc[0, 'Tank Temperature (deg F)'] = Temperature_Tank_Initial
-#Model.loc[1, 'Tank Temperature (deg F)'] = Temperature_Tank_Initial
-#Model['Jacket Losses (Btu)'] = 0
-#Model['Energy Withdrawn (Btu)'] = 0
-#Model['Energy Added Backup (Btu)'] = 0
-#Model['Energy Added Heat Pump (Btu)'] = 0
-#Model['Energy Added Total (Btu)'] = 0
-#Model['COP Gas'] = 0
-#
-#for i  in range(1, len(Model.index)): #Perform the modeling calculations for each row in the index
-#    Model.loc[i, 'Tank Temperature (deg C)'] = (Model.loc[i, 'Tank Temperature (deg F)'] - 32) * 1 / K_To_F_MagnitudeOnly #Conver the tank temperature to Celsius, because the COP coefficients require that input
-#    Model.loc[i, 'Jacket Losses (Btu)'] = -Coefficient_JacketLoss * (Model.loc[i, 'Tank Temperature (deg F)'] - Model.loc[i, 'Ambient Temperature (deg F)']) * (Model.loc[i, 'Time (min)'] - Model.loc[i-1, 'Time (min)']) / Minutes_In_Hour #Calculate the jacket losses through the walls of the tank in Btu
-#    Model.loc[i, 'Energy Added Backup (Btu)'] = Power_Backup * int(Model.loc[i, 'Tank Temperature (deg F)'] < 100) * (Model.loc[i, 'Time (min)'] - Model.loc[i-1, 'Time (min)']) / Minutes_In_Hour #Calculate the energy added to the tank using the backup electric resistance elements
-#    Model.loc[i, 'Energy Withdrawn (Btu)'] = -Model.loc[i, 'Hot Water Draw Volume (gal)'] * Density_Water * SpecificHeat_Water * (Model.loc[i, 'Tank Temperature (deg F)'] - Model.loc[i, 'Inlet Water Temperature (deg F)']) #Calculate the energy withdrawn by the occupants using hot water
-#    
-#    if i > 0: #Use these calculations only for the first timestep
-#        Model.loc[i, 'Energy Added Heat Pump (Btu)'] = FiringRate_HeatPump * Regression_COP(Model.loc[i, 'Tank Temperature (deg C)']) * int(Model.loc[i, 'Tank Temperature (deg F)'] < (Temperature_Tank_Set - Temperature_Tank_Set_Deadband) or Model.loc[i-1, 'Energy Added Heat Pump (Btu)'] > 0 and Model.loc[i, 'Tank Temperature (deg F)'] < Temperature_Tank_Set) * (Model.loc[i, 'Time (min)'] - Model.loc[i-1, 'Time (min)']) / Minutes_In_Hour #Calculate the energy added by the heat pump during the previous timestep
-#        Model.loc[i, 'Jacket Losses (Btu)'] = -Coefficient_JacketLoss * (Model.loc[i, 'Tank Temperature (deg F)'] - Model.loc[i, 'Ambient Temperature (deg F)']) * (Model.loc[i, 'Time (min)'] - Model.loc[i-1, 'Time (min)']) / Minutes_In_Hour #Calculate the jacket losses out the side of the tank during the previous timestep
-#        Model.loc[i, 'Energy Added Backup (Btu)'] = Power_Backup * int(Model.loc[i, 'Tank Temperature (deg F)'] < 100) * (Model.loc[i, 'Time (min)'] - Model.loc[i-1, 'Time (min)']) / Minutes_In_Hour #Calculate the energy added by the backup resistance element during the previous timestep
-#        Model.loc[i, 'Time Step (min)'] = Model.loc[i, 'Time (min)']-Model.loc[i-1, 'Time (min)']
-#        
-#    Model.loc[i, 'Total Energy Change (Btu)'] = Model.loc[i, 'Jacket Losses (Btu)'] + Model.loc[i, 'Energy Withdrawn (Btu)'] + Model.loc[i, 'Energy Added Backup (Btu)'] + Model.loc[i, 'Energy Added Heat Pump (Btu)'] #Calculate the energy change in the tank during the previous timestep
-#    if i < len(Model.index) - 1: #Don't do this for the final timestep. Because that would summon the Knights who Say "Ni"
-#        Model.loc[i + 1, 'Tank Temperature (deg F)'] = Model.loc[i, 'Total Energy Change (Btu)'] / (ThermalMass_Tank) + Model.loc[i, 'Tank Temperature (deg F)'] #Calculate the tank temperature during the next time step
-#
-#    Model.loc[i, 'COP Gas'] = Regression_COP(Model.loc[i, 'Tank Temperature (deg C)']) * int(Model.loc[i, 'Energy Added Heat Pump (Btu)'] > 0)
-#
-#Model['Elec Energy Demand (Watts)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, 158.5, 5)
-#Model['Electric Usage (W-hrs)'] = np.where(Model['Elec Energy Demand (Watts)'] == 158.5, (158.5 * (Model['Time Step (min)']/60)) + (Model['Energy Added Backup (Btu)']/3.413), (5 * (Model['Time Step (min)']/60)) + (Model['Energy Added Backup (Btu)']/3.413))
-#Model['Gas Usage (Btu)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Energy Added Heat Pump (Btu)'] / Model['COP Gas'],0)
-#                  
-#Model['Energy Added Total (Btu)'] = Model['Energy Added Heat Pump (Btu)'] + Model['Energy Added Backup (Btu)'] #Calculate the total energy added to the tank during this timestep
-#
-#cols = list(Model.columns)
-#cols.insert(0,cols.pop(cols.index('Time Step (min)')))
-#cols.insert(0,cols.pop(cols.index('Time (min)')))
-#Model = Model[cols]
+Model['Tank Temperature (deg F)'] = 0
+Model.loc[0, 'Tank Temperature (deg F)'] = Temperature_Tank_Initial
+Model.loc[1, 'Tank Temperature (deg F)'] = Temperature_Tank_Initial
+Model['Jacket Losses (Btu)'] = 0
+Model['Energy Withdrawn (Btu)'] = 0
+Model['Energy Added Backup (Btu)'] = 0
+Model['Energy Added Heat Pump (Btu)'] = 0
+Model['Energy Added Total (Btu)'] = 0
+Model['COP Gas'] = 0
+
+for i  in range(1, len(Model.index)): #Perform the modeling calculations for each row in the index
+    Model.loc[i, 'Tank Temperature (deg C)'] = (Model.loc[i, 'Tank Temperature (deg F)'] - 32) * 1 / K_To_F_MagnitudeOnly #Conver the tank temperature to Celsius, because the COP coefficients require that input
+    Model.loc[i, 'Jacket Losses (Btu)'] = -Coefficient_JacketLoss * (Model.loc[i, 'Tank Temperature (deg F)'] - Model.loc[i, 'Ambient Temperature (deg F)']) * (Model.loc[i, 'Time (min)'] - Model.loc[i-1, 'Time (min)']) / Minutes_In_Hour #Calculate the jacket losses through the walls of the tank in Btu
+    Model.loc[i, 'Energy Added Backup (Btu)'] = Power_Backup * int(Model.loc[i, 'Tank Temperature (deg F)'] < 100) * (Model.loc[i, 'Time (min)'] - Model.loc[i-1, 'Time (min)']) / Minutes_In_Hour #Calculate the energy added to the tank using the backup electric resistance elements
+    Model.loc[i, 'Energy Withdrawn (Btu)'] = -Model.loc[i, 'Hot Water Draw Volume (gal)'] * Density_Water * SpecificHeat_Water * (Model.loc[i, 'Tank Temperature (deg F)'] - Model.loc[i, 'Inlet Water Temperature (deg F)']) #Calculate the energy withdrawn by the occupants using hot water
+    
+    if i > 0: #Use these calculations only for the first timestep
+        Model.loc[i, 'Energy Added Heat Pump (Btu)'] = FiringRate_HeatPump * Regression_COP(Model.loc[i, 'Tank Temperature (deg C)']) * int(Model.loc[i, 'Tank Temperature (deg F)'] < (Temperature_Tank_Set - Temperature_Tank_Set_Deadband) or Model.loc[i-1, 'Energy Added Heat Pump (Btu)'] > 0 and Model.loc[i, 'Tank Temperature (deg F)'] < Temperature_Tank_Set) * (Model.loc[i, 'Time (min)'] - Model.loc[i-1, 'Time (min)']) / Minutes_In_Hour #Calculate the energy added by the heat pump during the previous timestep
+        Model.loc[i, 'Jacket Losses (Btu)'] = -Coefficient_JacketLoss * (Model.loc[i, 'Tank Temperature (deg F)'] - Model.loc[i, 'Ambient Temperature (deg F)']) * (Model.loc[i, 'Time (min)'] - Model.loc[i-1, 'Time (min)']) / Minutes_In_Hour #Calculate the jacket losses out the side of the tank during the previous timestep
+        Model.loc[i, 'Energy Added Backup (Btu)'] = Power_Backup * int(Model.loc[i, 'Tank Temperature (deg F)'] < 100) * (Model.loc[i, 'Time (min)'] - Model.loc[i-1, 'Time (min)']) / Minutes_In_Hour #Calculate the energy added by the backup resistance element during the previous timestep
+        Model.loc[i, 'Time Step (min)'] = Model.loc[i, 'Time (min)']-Model.loc[i-1, 'Time (min)']
+        
+    Model.loc[i, 'Total Energy Change (Btu)'] = Model.loc[i, 'Jacket Losses (Btu)'] + Model.loc[i, 'Energy Withdrawn (Btu)'] + Model.loc[i, 'Energy Added Backup (Btu)'] + Model.loc[i, 'Energy Added Heat Pump (Btu)'] #Calculate the energy change in the tank during the previous timestep
+    if i < len(Model.index) - 1: #Don't do this for the final timestep. Because that would summon the Knights who Say "Ni"
+        Model.loc[i + 1, 'Tank Temperature (deg F)'] = Model.loc[i, 'Total Energy Change (Btu)'] / (ThermalMass_Tank) + Model.loc[i, 'Tank Temperature (deg F)'] #Calculate the tank temperature during the next time step
+
+    Model.loc[i, 'COP Gas'] = Regression_COP(Model.loc[i, 'Tank Temperature (deg C)']) * int(Model.loc[i, 'Energy Added Heat Pump (Btu)'] > 0)
+
+Model['Elec Energy Demand (Watts)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, 158.5, 5)
+Model['Electric Usage (W-hrs)'] = np.where(Model['Elec Energy Demand (Watts)'] == 158.5, (158.5 * (Model['Time Step (min)']/60)) + (Model['Energy Added Backup (Btu)']/3.413), (5 * (Model['Time Step (min)']/60)) + (Model['Energy Added Backup (Btu)']/3.413))
+Model['Gas Usage (Btu)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Energy Added Heat Pump (Btu)'] / Model['COP Gas'],0)
+                  
+Model['Energy Added Total (Btu)'] = Model['Energy Added Heat Pump (Btu)'] + Model['Energy Added Backup (Btu)'] #Calculate the total energy added to the tank during this timestep
+
+cols = list(Model.columns)
+cols.insert(0,cols.pop(cols.index('Time Step (min)')))
+cols.insert(0,cols.pop(cols.index('Time (min)')))
+Model = Model[cols]
 #
 Model.to_csv(os.path.dirname(__file__) + os.sep + 'Output\Output.csv', index = False) #Save the model too the declared file. This should probably be replaced with a dynamic file name for later use in parametric simulations
 
