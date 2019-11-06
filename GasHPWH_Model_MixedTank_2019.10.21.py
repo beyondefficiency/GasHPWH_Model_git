@@ -85,10 +85,10 @@ Density_Water = 8.3176 #lb-m/gal @ 80 deg F, http://www.engineeringtoolbox.com/w
 #Constants used for unit conversions
 Hours_In_Day = 24 #The number of hours in a day
 Minutes_In_Hour = 60 #The number of minutes in an hour
-W_To_BtuPerHour = 3.412142
-K_To_F_MagnitudeOnly = 1.8/1.
-Btu_Per_CubicFoot_NaturalGas = 1015
-Btu_Per_WattHour = 3.412142
+W_To_BtuPerHour = 3.412142 #Converting from Watts to Btu/hr
+K_To_F_MagnitudeOnly = 1.8/1. #Converting from K/C to F. Only applicable for magnitudes, not actual temperatures (E.g. Yes for "A temperature difference of 10 C" but not for "The water temperature is 40 C")
+Btu_Per_CubicFoot_NaturalGas = 1015 #Energy density of natural gas, in Btu/ft^3
+Btu_Per_WattHour = 3.412142 #Conversion factor between Btu nad W-h
 
 #Converting quantities from SI units provided by Alex to (Incorrect, silly, obnoxious) IP units
 Coefficient_JacketLoss = Coefficient_JacketLoss * W_To_BtuPerHour * K_To_F_MagnitudeOnly #Converts Coefficient_JacketLoss from W/K to Btu/hr-F
