@@ -73,8 +73,8 @@ Coefficient_JacketLoss = 3.8 #W/k, based on e-mail from Alex Fridyland on 29 Mar
 Power_Backup = 1100 #W, electricity consumption of the backup resistance elements
 Threshold_Activation_Backup = 100 #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
 FiringRate_HeatPump = 1874 #W, heat consumed by the heat pump
-EnergyConsumption_Parasitic = 158.5 #W, electricity consumed by the fan when the heat pump is running
-
+ElectricityConsumption_Active = 158.5 #W, electricity consumed by the fan when the heat pump is running
+ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
 #Constants used in water-based calculations
@@ -228,8 +228,8 @@ for i  in range(1, len(Model.index)): #Perform the modeling calculations for eac
     End_Iteration = time.time()
     print('Time_Iteration is ' + str(End_Iteration - Start_Iteration))
 
-Model['Elec Energy Demand (Watts)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, EnergyConsumption_Parasitic, 5)
-Model['Electric Usage (W-hrs)'] = np.where(Model['Elec Energy Demand (Watts)'] == EnergyConsumption_Parasitic, (EnergyConsumption_Parasitic * (Model['Time Step (min)']/60)) + (Model['Energy Added Backup (Btu)']/3.413), (5 * (Model['Time Step (min)']/60)) + (Model['Energy Added Backup (Btu)']/3.413))
+Model['Elec Energy Demand (Watts)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, ElectricityConsumption_Active, ElectricityConsumption_Idle)
+Model['Electric Usage (W-hrs)'] = Model['Elec Energy Demand (Watts)'] * Model['Time Step (min)']/60 + (Model['Energy Added Backup (Btu)']/3.413)
 Model['Gas Usage (Btu)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Energy Added Heat Pump (Btu)'] / Model['COP Gas'],0)
                   
 Model['Energy Added Total (Btu)'] = Model['Energy Added Heat Pump (Btu)'] + Model['Energy Added Backup (Btu)'] #Calculate the total energy added to the tank during this timestep
