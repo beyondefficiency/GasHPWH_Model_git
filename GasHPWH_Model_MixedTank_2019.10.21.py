@@ -76,6 +76,7 @@ Threshold_Deactivation_Backup = 115 #Deg F, sets the temperature when the backup
 FiringRate_HeatPump = 1874 #W, heat consumed by the heat pump
 ElectricityConsumption_Active = 158.5 #W, electricity consumed by the fan when the heat pump is running
 ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
+NOx_Output = 10 #ng/J, NOx production of the HP when active
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
 #Constants used in water-based calculations
@@ -85,10 +86,14 @@ Density_Water = 8.3176 #lb-m/gal @ 80 deg F, http://www.engineeringtoolbox.com/w
 #Constants used for unit conversions
 Hours_In_Day = 24 #The number of hours in a day
 Minutes_In_Hour = 60 #The number of minutes in an hour
+Seconds_In_Minute = 60
 W_To_BtuPerHour = 3.412142 #Converting from Watts to Btu/hr
 K_To_F_MagnitudeOnly = 1.8/1. #Converting from K/C to F. Only applicable for magnitudes, not actual temperatures (E.g. Yes for "A temperature difference of 10 C" but not for "The water temperature is 40 C")
 Btu_Per_CubicFoot_NaturalGas = 1015 #Energy density of natural gas, in Btu/ft^3
 Btu_Per_WattHour = 3.412142 #Conversion factor between Btu nad W-h
+
+#Calculating the NOx production rate of the HPWH when HP is active
+NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
 
 #Converting quantities from SI units provided by Alex to (Incorrect, silly, obnoxious) IP units
 Coefficient_JacketLoss = Coefficient_JacketLoss * W_To_BtuPerHour * K_To_F_MagnitudeOnly #Converts Coefficient_JacketLoss from W/K to Btu/hr-F
@@ -226,6 +231,7 @@ Model['COP Gas'] = Regression_COP(Model['Tank Temperature (deg F)'])
 Model['Elec Energy Demand (Watts)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, ElectricityConsumption_Active, ElectricityConsumption_Idle)
 Model['Electric Usage (W-hrs)'] = Model['Elec Energy Demand (Watts)'] * Timestep/60 + (Model['Energy Added Backup (Btu)']/3.413)
 Model['Gas Usage (Btu)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Energy Added Heat Pump (Btu)'] / Model['COP Gas'],0)
+Model['NOx Production (ng)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Timestep * NOx_Production_Rate, 0)
                   
 Model['Energy Added Total (Btu)'] = Model['Energy Added Heat Pump (Btu)'] + Model['Energy Added Backup (Btu)'] #Calculate the total energy added to the tank during this timestep
 
