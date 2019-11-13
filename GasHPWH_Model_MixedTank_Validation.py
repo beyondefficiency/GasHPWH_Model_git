@@ -58,12 +58,12 @@ Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation
 Temperature_Ambient = 68 #deg F, temperature of the ambient air, placeholder for now
 Volume_Tank = 73 #gal, volume of water held in the storage tank
 Coefficient_JacketLoss = 5.75 #W/K, based on e-mail from Alex Fridyland on 29 Mar 2019
-Power_Backup = 0 #W, electricity consumption of the backup resistance elements
-Threshold_Activation_Backup = 95 #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
+Power_Backup = 1250 #W, electricity consumption of the backup resistance elements
+Threshold_Activation_Backup = 99 #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
 Threshold_Deactivation_Backup = 115 #Deg F, sets the temperature when the backup element disengages after it has been engaged
-FiringRate_HeatPump = 2930.72 #W, heat consumed by the heat pump
+FiringRate_HeatPump = 2930.72*0.75 #W, heat consumed by the heat pump
 ElectricityConsumption_Active = 158.5 #W, electricity consumed by the fan when the heat pump is running
-ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
+ElectricityConsumption_Idle = 18 #W, electricity consumed by the HPWH when idle
 NOx_Output = 10 #ng/J, NOx production of the HP when active
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
@@ -216,6 +216,8 @@ if Compare_To_MeasuredData == 1:
     Compare_To_MeasuredData['Gas Consumption (Btu)'] = 0 #Creates a new column for gas consumption in each timestep with a default value of 0. This value will later be overwritten when the correct value for each timestep is calculated
     Compare_To_MeasuredData['Energy Added Heat Pump, Model (Btu)'] = Model['Energy Added Heat Pump (Btu)']
     
+    Compare_To_MeasuredData['Electricity Consumed, Model (W-h)'] = Model['Electric Usage (W-hrs)'].cumsum()
+    
     for i in range(1, len(Compare_To_MeasuredData)):
         Compare_To_MeasuredData.loc[i, 'Energy Added, Data (Btu)'] = Btu_Per_CubicFoot_NaturalGas * Compare_To_MeasuredData.loc[i, 'COP, Data'] * (Draw_Profile.loc[i, 'Gas Meter'] - Draw_Profile.loc[i-1, 'Gas Meter']) + Btu_Per_WattHour * (Draw_Profile.loc[i, 'Power Draw'] - Draw_Profile.loc[i-1, 'Power Draw']) #Calculates the energy added to the water during each timestep in the measured data
         Compare_To_MeasuredData.loc[i, 'Energy Added Heat Pump, Data (Btu)'] = Btu_Per_CubicFoot_NaturalGas * Compare_To_MeasuredData.loc[i, 'COP, Data'] * (Draw_Profile.loc[i, 'Gas Meter'] - Draw_Profile.loc[i-1, 'Gas Meter']) #Calculates the energy added to the water by the heat pump during each time step in the measured data
@@ -271,11 +273,19 @@ if Compare_To_MeasuredData == 1:
     p9.title.text_font_size = '12pt'
     p9.line(x = Compare_To_MeasuredData['Time (min)'], y = Model['Timestep (min)'], legend = 'Model', color = 'red')
     p9.circle(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Timestep (min)'], legend = 'Data', color = 'blue')
+
+    p10 = figure(width=1600, height= 400, x_axis_label='Time (min)', y_axis_label = 'Electricity Consumed (W-h)')
+    p10.title.text_font_size = '12pt'
+    p10.line(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Electricity Consumed, Model (W-h)'], legend = 'Model', color = 'red')
+    p10.circle(x = Compare_To_MeasuredData['Time (min)'], y = Draw_Profile['Power Draw'] - Draw_Profile['Power Draw'].iloc[0], legend = 'Data', color = 'blue')
     
-    p = gridplot([[p1],[p2], [p3], [p4], [p5], [p6], [p7], [p8], [p9]])
+    p = gridplot([[p1],[p2], [p3], [p4], [p5], [p6], [p7], [p8], [p9], [p10]])
     output_file(os.path.dirname(__file__) + os.sep + 'Validation Data\Validation Plots.html', title = 'Validation Data')
     save(p)
     
+    ElectricityConsumption_Data = Draw_Profile['Power Draw'].iloc[-1] - Draw_Profile['Power Draw'].iloc[0]
+    
     PercentError_Gas = (Compare_To_MeasuredData['Energy Added Total (Btu)'].sum() - Compare_To_MeasuredData['Energy Added Heat Pump, Data (Btu)'].sum()) / Compare_To_MeasuredData['Energy Added, Data (Btu)'].sum() * 100
     PercentError_COP = (Compare_To_MeasuredData['COP Gas'].mean() - Compare_To_MeasuredData['COP, Data'].mean()) / Compare_To_MeasuredData['COP, Data'].mean() * 100
+    PercentError_Electricity = (Model['Electric Usage (W-hrs)'].sum() - ElectricityConsumption_Data) / ElectricityConsumption_Data * 100
     
