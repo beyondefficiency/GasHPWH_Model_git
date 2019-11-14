@@ -117,7 +117,7 @@ Draw_Profile['Gas Meter'] = Draw_Profile['Gas Meter'].astype(float) #Converts st
 Draw_Profile['Power Draw'] = Draw_Profile['Power Draw'].astype(float) #Converts string data to float so the numbers can be used in calculations
 Draw_Profile['Mid Tank'] = Draw_Profile['Mid Tank'].astype(float) #Converts string data to float so the numbers can be used in calculations
    
-values = {'Water Flow': 0} #These two lines set all "nan" entries in Water Flow to 0. This is needed to avoid errors when the data logger resets
+values = {'Water Flow': 0, 'Power Draw': 0} #These two lines set all "nan" entries in Water Flow to 0. This is needed to avoid errors when the data logger resets
 Draw_Profile = Draw_Profile.fillna(value = values)
 
 if Draw_Profile['ELAPSED TIME'].min() == 0.0: #ELAPSED TIME = 0 when the data logger resets. This code only executes if the data logger reset during the monitoring perio
@@ -132,6 +132,10 @@ if Draw_Profile['ELAPSED TIME'].min() == 0.0: #ELAPSED TIME = 0 when the data lo
             if i < len(Draw_Profile.index) - 1: #Only do this if it's NOT the last row in the model. Because doing that would cause errors. The computer would overheat, which would ignite the oils on the keyboard from typing, which would burn the air in the office and kill everybody. Then you'd have to file a safety incident report. Sad face :-(
                 Delta_Next = Draw_Profile.loc[i + 1, 'Water Flow'] - Draw_Profile.loc[i, 'Water Flow'] #Identify the increase in cumulative water flow between the current timestep and the next one
             Draw_Profile.loc[i, 'Water Flow'] = Draw_Profile.loc[i - 1, 'Water Flow'] + Delta #Set the cumulative water flow of this timestep equal to the cumulative water flow of the previous timestep + the previously identified delta
+
+if Draw_Profile['Power Draw'].min() == 0.0:
+    Index_Reset = Draw_Profile['Power Draw'].idxmin()
+    Draw_Profile[Index_Reset:-1]['Power Draw'] = Draw_Profile[Index_Reset:-1]['Power Draw'] + Draw_Profile.loc[Index_Reset - 1, 'Power Draw']
 
 Model['Time (min)'] = (Draw_Profile['ELAPSED TIME'] - Draw_Profile.loc[0, 'ELAPSED TIME'])/60. #Calculate the elapsed time in minutes, instead of seconds, and add it to the 
 Model['Water Flow'] = Draw_Profile['Water Flow'] #Adds a column to Model containing the water flow information from the measured data
