@@ -136,6 +136,7 @@ if Draw_Profile['ELAPSED TIME'].min() == 0.0: #ELAPSED TIME = 0 when the data lo
 if Draw_Profile['Power Draw'].min() == 0.0:
     Index_Reset = Draw_Profile['Power Draw'].idxmin()
     Draw_Profile[Index_Reset:-1]['Power Draw'] = Draw_Profile[Index_Reset:-1]['Power Draw'] + Draw_Profile.loc[Index_Reset - 1, 'Power Draw']
+    Draw_Profile['Power Draw'].iloc[-1] = Draw_Profile['Power Draw'].iloc[-1] + Draw_Profile.loc[Index_Reset - 1, 'Power Draw']
 
 Model['Time (min)'] = (Draw_Profile['ELAPSED TIME'] - Draw_Profile.loc[0, 'ELAPSED TIME'])/60. #Calculate the elapsed time in minutes, instead of seconds, and add it to the 
 Model['Water Flow'] = Draw_Profile['Water Flow'] #Adds a column to Model containing the water flow information from the measured data
@@ -287,9 +288,9 @@ if Compare_To_MeasuredData == 1:
     output_file(os.path.dirname(__file__) + os.sep + 'Validation Data\Validation Plots.html', title = 'Validation Data')
     save(p)
     
-    ElectricityConsumption_Data = Draw_Profile['Power Draw'].iloc[-1] - Draw_Profile['Power Draw'].iloc[0]
+    ElectricityConsumption_Data = Draw_Profile['Power Draw'].iloc[-2] - Draw_Profile.loc[0, 'Power Draw']
     
     PercentError_Gas = (Compare_To_MeasuredData['Energy Added Total (Btu)'].sum() - Compare_To_MeasuredData['Energy Added Heat Pump, Data (Btu)'].sum()) / Compare_To_MeasuredData['Energy Added, Data (Btu)'].sum() * 100
     PercentError_COP = (Compare_To_MeasuredData['COP Gas'].mean() - Compare_To_MeasuredData['COP, Data'].mean()) / Compare_To_MeasuredData['COP, Data'].mean() * 100
-    PercentError_Electricity = (Model['Electric Usage (W-hrs)'].sum() - ElectricityConsumption_Data) / ElectricityConsumption_Data * 100
+    PercentError_Electricity = (Compare_To_MeasuredData['Electricity Consumed, Model (W-h)'].iloc[-1] - ElectricityConsumption_Data) / ElectricityConsumption_Data * 100
     
