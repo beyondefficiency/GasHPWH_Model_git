@@ -2,13 +2,19 @@
 """
 Created on Tue Nov 19 09:51:40 2019
 
+This module contains the actual model for the gas HPWH. It was pulled into this separate file to make it easier to maintain. This way it can
+be referenced in both the simulation and validation scripts as needed.
+
+Currently this module holds only Model_GasHPWH_MixedTank, representing a 1-node model with a fully mixed tank. The plan is to later add additional functions
+for different assumptions as needed, creating a library of relevant simulation models.
+
 @author: Peter Grant
 """
 
 import numpy as np
 import pandas as pd
 
-Minutes_In_Hour = 60
+Minutes_In_Hour = 60 #Conversion between hours and minutes
 SpecificHeat_Water = 0.998 #Btu/(lb_m-F) @ 80 deg F, http://www.engineeringtoolbox.com/water-properties-d_1508.html
 Density_Water = 8.3176 #lb-m/gal @ 80 deg F, http://www.engineeringtoolbox.com/water-density-specific-weight-d_595.html
 
