@@ -10,10 +10,10 @@ in the measured data.
 The model is broken into several different setions. The sections are as follows:
 Import Statements: Imports various python packages as necessary
 Inputs: This is the most important section for the user. It includes inputs that a) Inform the model of the input data,
--(Either CBECC-Res draw profile or GTI field data), b) Determine whether it is running a simulation or comparing to measured 
--data (Comparing to measured data should probably only be used for model validation purposes), and c) Define the parameters of 
+-(Either CBECC-Res draw profile or GTI field data), b) Determine whether it is running a simulation or comparing to measured
+-data (Comparing to measured data should probably only be used for model validation purposes), and c) Define the parameters of
 -the gas HPWH and the operating conditions
-Constant Declarations and Calculations: This section contains constants such as the specific heat of water, as well as 
+Constant Declarations and Calculations: This section contains constants such as the specific heat of water, as well as
 -calculations needed for the project (For instance, conversions from SI units to IP)
 Modeling: This section performs the calculations necessary to model the gas HPWH and, if instructed to in Inputs, compare the
 -results to the measured data. This is the guts of the model, and the most important portion for users who with to truly
@@ -31,17 +31,18 @@ from bokeh.models import LassoSelectTool, WheelZoomTool, BoxZoomTool, ResetTool
 import os
 import time
 import GasHPWH_Model as GasHPWH
+from linetimer import CodeTimer
 
 #%%--------------------------INPUTS-------------------------------------------
 
 #These first two variables describe the data you're using to input your hot water draw profile. The first variable provides the path
-#to the data set itself. This means you should fill in the path with the specific location of your data file. Note that this 
+#to the data set itself. This means you should fill in the path with the specific location of your data file. Note that this
 #can be done directly on SharePoint, but it works much better if you sync the folder to your hard drive
 #The second variable states the source of the draw profile data. Right now the model is capable of handling CBECC-Res draw profiles,
 #generated using our scripts, and data from GTI's field study on these devices. The comment after Type_DrawProfile states
 #the possible options
 
-Path_DrawProfile = os.path.dirname(__file__) + os.sep + 'Data\GTI\Calibration Dataset 1.0 for Frontier - Site 4 (May-June 2019) CONFIDENTIAL.csv'
+Path_DrawProfile = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'GTI' + os.sep + 'Calibration Dataset 1.0 for Frontier - Site 4 (May-June 2019) CONFIDENTIAL.csv'
 
 
 #Set this = 1 if you want to compare model predictions to measured data results. This is useful for model validation and error
@@ -93,7 +94,7 @@ FiringRate_HeatPump = FiringRate_HeatPump * W_To_BtuPerHour #Btu/hr
 ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
 
 #Reading in the coefficients describing the COP of the gas HPWH as a function of the temperature of the water in the tank
-Coefficients_COP = np.fromfile(os.path.dirname(__file__) + os.sep + 'Coefficients\COP_Function_TReturn_F_6Nov2019.csv')
+Coefficients_COP = np.fromfile(os.path.dirname(__file__) + os.sep + 'Coefficients' + os.sep + 'COP_Function_TReturn_F_6Nov2019.csv')
 
 #Stores the parameters in a list for use in the model
 Parameters = [Coefficient_JacketLoss, Power_Backup, Threshold_Activation_Backup, Threshold_Deactivation_Backup, FiringRate_HeatPump, Temperature_Tank_Set, Temperature_Tank_Set_Deadband, ThermalMass_Tank, ElectricityConsumption_Active, ElectricityConsumption_Idle, NOx_Production_Rate]
@@ -106,9 +107,9 @@ Regression_COP = np.poly1d(Coefficients_COP)
 #This section of the code creates a data frame that can be used to represent the simulation model
 #The first step is putting the draw profile data into the right format (E.g. If it's CBECC data, we need to convert from event-based to timestep-based)
 #The following if-statement takes care of this for 2 different data formats
-    
+
 Start_ProfileCreation = time.time()
-    
+
 Draw_Profile = pd.read_csv(Path_DrawProfile, header = 1) #Reads the input data, setting the first row (measurement name) of the .csv file as the header
 Draw_Profile = Draw_Profile.drop([0]) #Deletes the row of the data frame stating the units of each column, as that would cause errors in the calculations
 Draw_Profile = Draw_Profile.reset_index() #Resets the index now that the first row has been removed
@@ -120,7 +121,7 @@ Draw_Profile['TIME'] = pd.to_datetime(Draw_Profile['TIME']) #Converts string dat
 Draw_Profile['Gas Meter'] = Draw_Profile['Gas Meter'].astype(float) #Converts string data to float so the numbers can be used in calculations
 Draw_Profile['Power Draw'] = Draw_Profile['Power Draw'].astype(float) #Converts string data to float so the numbers can be used in calculations
 Draw_Profile['Mid Tank'] = Draw_Profile['Mid Tank'].astype(float) #Converts string data to float so the numbers can be used in calculations
-   
+
 values = {'Water Flow': 0, 'Power Draw': 0} #These two lines set all "nan" entries in Water Flow to 0. This is needed to avoid errors when the data logger resets
 Draw_Profile = Draw_Profile.fillna(value = values)
 
@@ -142,13 +143,13 @@ if Draw_Profile['Power Draw'].min() == 0.0:
     Draw_Profile[Index_Reset:-1]['Power Draw'] = Draw_Profile[Index_Reset:-1]['Power Draw'] + Draw_Profile.loc[Index_Reset - 1, 'Power Draw']
     Draw_Profile['Power Draw'].iloc[-1] = Draw_Profile['Power Draw'].iloc[-1] + Draw_Profile.loc[Index_Reset - 1, 'Power Draw']
 
-Model['Time (min)'] = (Draw_Profile['ELAPSED TIME'] - Draw_Profile.loc[0, 'ELAPSED TIME'])/60. #Calculate the elapsed time in minutes, instead of seconds, and add it to the 
+Model['Time (min)'] = (Draw_Profile['ELAPSED TIME'] - Draw_Profile.loc[0, 'ELAPSED TIME'])/60. #Calculate the elapsed time in minutes, instead of seconds, and add it to the
 Model['Water Flow'] = Draw_Profile['Water Flow'] #Adds a column to Model containing the water flow information from the measured data
 Temperature_Tank_Initial = float(Draw_Profile.loc[0, 'Mid Tank']) #Sets the initial temperature of the modeled tank equal to the initial measured temperature
 Model['Hot Water Draw Volume (gal)'] = 0 #Sets the draw volume during the first timestep in the model to 0. Will be overwritten later if needed
 for i in Draw_Profile.index: #This section calculates the hot water flow during each timestep and adds it to the modeling dataframe
     if i > 0: #This code references the previous timestep, so don't do it on the first timestep. Because that's a terrible idea
-        Model.loc[i, 'Hot Water Draw Volume (gal)'] = Draw_Profile.loc[i, 'Water Flow'] - Draw_Profile.loc[i-1, 'Water Flow'] #Find the delta between the cumulative water flow identified in the current and previous timesteps, then enter that value in the current row  
+        Model.loc[i, 'Hot Water Draw Volume (gal)'] = Draw_Profile.loc[i, 'Water Flow'] - Draw_Profile.loc[i-1, 'Water Flow'] #Find the delta between the cumulative water flow identified in the current and previous timesteps, then enter that value in the current row
     elif i == 0: #For the very first row
         Model.loc[i, 'Hot Water Draw Volume (gal)'] = 0 #Set it equal to 0. Because there's no previous timestep to calculate from
 
@@ -156,7 +157,7 @@ Model['Ambient Temperature (deg F)'] = Draw_Profile['Indoor Temp'].astype(float)
 Model['Inlet Water Temperature (deg F)'] = Draw_Profile['Water In Temp'].astype(float) #Converts data frm string to float so it can be used in calculations
 
 End_ProfileCreation = time.time()
-    
+
 print('Profile creation time is ' + str(End_ProfileCreation - Start_ProfileCreation))
 
 #The following code simulates the performance of the gas HPWH across different draw profiles
@@ -173,18 +174,43 @@ Model['Energy Added Backup (Btu)'] = 0
 Model['Energy Added Heat Pump (Btu)'] = 0
 Model['Energy Added Total (Btu)'] = 0
 Model['COP Gas'] = 0
+Model['Total Energy Change (Btu)'] = 0
 
 Model['Time shifted (min)'] = Model['Time (min)'].shift(-1)
 Model['Time shifted (min)'].iloc[-1] = Model['Time (min)'].iloc[-1] + 5
 Model['Timestep (min)'] = Model['Time shifted (min)'] - Model['Time (min)']
 
 Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
+#
+#for i  in range(1, len(Model.index)): #Perform the modeling calculations for each row in the index
+#
+#    Model.loc[i, 'Jacket Losses (Btu)'] = -Coefficient_JacketLoss * (Model.loc[i, 'Tank Temperature (deg F)'] - Model.loc[i, 'Ambient Temperature (deg F)']) * (Model.loc[i, 'Time (min)'] - Model.loc[i-1, 'Time (min)']) / Minutes_In_Hour #Calculate the jacket losses through the walls of the tank in Btu
+#    if Model.loc[i-1, 'Energy Added Backup (Btu)'] == 0: #If the backup heating element was NOT active during the last time step
+#        Model.loc[i, 'Energy Added Backup (Btu)'] = Power_Backup * int(Model.loc[i, 'Tank Temperature (deg F)'] < Threshold_Activation_Backup) * (Model.loc[i, 'Time (min)'] - Model.loc[i-1, 'Time (min)']) / Minutes_In_Hour #Calculate the energy added to the tank using the backup electric resistance elements
+#    else: #If it WAS active during the last time step
+#        Model.loc[i, 'Energy Added Backup (Btu)'] = Power_Backup * int(Model.loc[i, 'Tank Temperature (deg F)'] < Threshold_Deactivation_Backup) * (Model.loc[i, 'Time (min)'] - Model.loc[i-1, 'Time (min)']) / Minutes_In_Hour #Calculate the energy added to the tank using the backup electric resistance elements
+#
+#    Model.loc[i, 'Energy Withdrawn (Btu)'] = -Model.loc[i, 'Hot Water Draw Volume (gal)'] * Density_Water * SpecificHeat_Water * (Model.loc[i, 'Tank Temperature (deg F)'] - Model.loc[i, 'Inlet Water Temperature (deg F)']) #Calculate the energy withdrawn by the occupants using hot water
+#    Model.loc[i, 'Energy Added Heat Pump (Btu)'] = FiringRate_HeatPump * Regression_COP(Model.loc[i, 'Tank Temperature (deg F)']) * int(Model.loc[i, 'Tank Temperature (deg F)'] < (Temperature_Tank_Set - Temperature_Tank_Set_Deadband) or Model.loc[i-1, 'Energy Added Heat Pump (Btu)'] > 0 and Model.loc[i, 'Tank Temperature (deg F)'] < Temperature_Tank_Set) * (Model.loc[i, 'Time (min)'] - Model.loc[i-1, 'Time (min)']) / Minutes_In_Hour #Calculate the energy added by the heat pump during the previous timestep
+#    Model.loc[i, 'Total Energy Change (Btu)'] = Model.loc[i, 'Jacket Losses (Btu)'] + Model.loc[i, 'Energy Withdrawn (Btu)'] + Model.loc[i, 'Energy Added Backup (Btu)'] + Model.loc[i, 'Energy Added Heat Pump (Btu)'] #Calculate the energy change in the tank during the previous timestep
+#
+#    if i < len(Model.index) - 1: #Don't do this for the final timestep. Because that would summon the Knights who Say "Ni"
+#        Model.loc[i + 1, 'Tank Temperature (deg F)'] = Model.loc[i, 'Total Energy Change (Btu)'] / (ThermalMass_Tank) + Model.loc[i, 'Tank Temperature (deg F)'] #Calculate the tank temperature during the next time step
+#
+#Model['COP Gas'] = Regression_COP(Model['Tank Temperature (deg F)'])
+#Model['Elec Energy Demand (Watts)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, ElectricityConsumption_Active, ElectricityConsumption_Idle)
+#Model['Gas Usage (Btu)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Energy Added Heat Pump (Btu)'] / Model['COP Gas'],0)
+#Model['Energy Added Total (Btu)'] = Model['Energy Added Heat Pump (Btu)'] + Model['Energy Added Backup (Btu)'] #Calculate the total energy added to the tank during this timestep
+#Model['Energy Added Heat Pump (Btu/min)'] = FiringRate_HeatPump * Regression_COP(Model['Tank Temperature (deg F)']) / Minutes_In_Hour * (Model['Energy Added Heat Pump (Btu)'] > 0)
+#
+#Model['Electric Usage (W-hrs)'] = Model['Elec Energy Demand (Watts)'] * Model['Timestep (min)']/60 + (Model['Energy Added Backup (Btu)']/3.413)
+#Model['NOx Production (ng)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Timestep (min)'] * NOx_Production_Rate, 0)
 
 Simulation_End = time.time()
 
 print ('Simulation time is ' + str(Simulation_End - Simulation_Start))
 
-Model.to_csv(os.path.dirname(__file__) + os.sep + 'Output\Output.csv', index = False) #Save the model too the declared file. This should probably be replaced with a dynamic file name for later use in parametric simulations
+Model.to_csv(os.path.dirname(__file__) + os.sep + 'Output' + os.sep + 'Output.csv', index = False) #Save the model too the declared file. This should probably be replaced with a dynamic file name for later use in parametric simulations
 
 #%%--------------------------MODEL COMPARISON-----------------------------------------
 
@@ -202,49 +228,49 @@ if Compare_To_MeasuredData == 1:
     Compare_To_MeasuredData['Energy Added, Data (Btu)'] = 0 #Creates a new column for energy added in each timestep with a default value of 0. This value will later be overwritten when the correct value for each timestep is calculated
     Compare_To_MeasuredData['Gas Consumption (Btu)'] = 0 #Creates a new column for gas consumption in each timestep with a default value of 0. This value will later be overwritten when the correct value for each timestep is calculated
     Compare_To_MeasuredData['Energy Added Heat Pump, Model (Btu)'] = Model['Energy Added Heat Pump (Btu)']
-    
+
     Compare_To_MeasuredData['Electricity Consumed, Model (W-h)'] = Model['Electric Usage (W-hrs)'].cumsum()
-    
+
     for i in range(1, len(Compare_To_MeasuredData)):
         Compare_To_MeasuredData.loc[i, 'Energy Added, Data (Btu)'] = Btu_Per_CubicFoot_NaturalGas * Compare_To_MeasuredData.loc[i, 'COP, Data'] * (Draw_Profile.loc[i, 'Gas Meter'] - Draw_Profile.loc[i-1, 'Gas Meter']) + Btu_Per_WattHour * (Draw_Profile.loc[i, 'Power Draw'] - Draw_Profile.loc[i-1, 'Power Draw']) #Calculates the energy added to the water during each timestep in the measured data
         Compare_To_MeasuredData.loc[i, 'Energy Added Heat Pump, Data (Btu)'] = Btu_Per_CubicFoot_NaturalGas * Compare_To_MeasuredData.loc[i, 'COP, Data'] * (Draw_Profile.loc[i, 'Gas Meter'] - Draw_Profile.loc[i-1, 'Gas Meter']) #Calculates the energy added to the water by the heat pump during each time step in the measured data
         Compare_To_MeasuredData.loc[i, 'Energy Added Heat Pump, Data (Btu/min)'] = Btu_Per_CubicFoot_NaturalGas * Compare_To_MeasuredData.loc[i, 'COP, Data'] * (Draw_Profile.loc[i, 'Gas Meter'] - Draw_Profile.loc[i-1, 'Gas Meter']) / (Compare_To_MeasuredData.loc[i, 'Time (min)'] - Compare_To_MeasuredData.loc[i-1, 'Time (min)']) #Calculates the rate of energy added to the heat pump during each timestep in the measured data
         Compare_To_MeasuredData.loc[i, 'Timestep (min)'] = Compare_To_MeasuredData.loc[i, 'Time (min)'] - Compare_To_MeasuredData.loc[i-1, 'Time (min)']
         Model.loc[i, 'Timestep (min)'] = Model.loc[i, 'Time (min)'] - Model.loc[i-1, 'Time (min)']
-    
+
     #Generates a series of plots that can be used for comparing the model results to the measured data
-        
-    tools = [LassoSelectTool(), WheelZoomTool(), BoxZoomTool(), ResetTool()]    
-    
+
+    tools = [LassoSelectTool(), WheelZoomTool(), BoxZoomTool(), ResetTool()]
+
     p1 = figure(width=1600, height= 400, x_axis_label='Time (min)', y_axis_label = 'Cumulative Hot Water Draw Volume (gal)', tools = tools)
     p1.title.text_font_size = '12pt'
     p1.line(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Hot Water Draw Volume, Model (gal)'], legend = 'Model', color = 'red')
     p1.circle(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Cumulative Hot Water Draw Volume, Data (gal)'], legend = 'Data', color = 'blue')
-    
+
     p2 = figure(width=1600, height= 400, x_axis_label='Time (min)', y_axis_label = 'Ambient Temperature (deg F)')
     p2.title.text_font_size = '12pt'
     p2.line(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Ambient Temperature (deg F)'], legend = 'Model', color = 'red')
-    p2.circle(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Ambient Temperature, Data (deg F)'], legend = 'Data', color = 'blue') 
+    p2.circle(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Ambient Temperature, Data (deg F)'], legend = 'Data', color = 'blue')
 
     p3 = figure(width=1600, height= 400, x_axis_label='Time (min)', y_axis_label = 'Inlet Temperature (deg F)')
     p3.title.text_font_size = '12pt'
     p3.line(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Inlet Water Temperature (deg F)'], legend = 'Model', color = 'red')
-    p3.circle(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Inlet Water Temperature, Data (deg F)'], legend = 'Data', color = 'blue') 
+    p3.circle(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Inlet Water Temperature, Data (deg F)'], legend = 'Data', color = 'blue')
 
     p4 = figure(width=1600, height= 400, x_axis_label='Time (min)', y_axis_label = 'Tank Temperature (deg F)')
     p4.title.text_font_size = '12pt'
     p4.line(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Tank Temperature (deg F)'], legend = 'Model', color = 'red')
-    p4.circle(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Tank Temperature, Data (deg F)'], legend = 'Data', color = 'blue') 
+    p4.circle(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Tank Temperature, Data (deg F)'], legend = 'Data', color = 'blue')
 
     p5 = figure(width=1600, height= 400, x_axis_label='Time (min)', y_axis_label = 'Energy Added (Btu)')
     p5.title.text_font_size = '12pt'
     p5.line(x = Compare_To_MeasuredData['Time (min)'], y = Model['Energy Added Total (Btu)'], legend = 'Model', color = 'red')
-    p5.circle(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Energy Added, Data (Btu)'], legend = 'Data', color = 'blue') 
+    p5.circle(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Energy Added, Data (Btu)'], legend = 'Data', color = 'blue')
 
     p6 = figure(width=1600, height= 400, x_axis_label='Time (min)', y_axis_label = 'COP')
     p6.title.text_font_size = '12pt'
     p6.line(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['COP Gas'], legend = 'Model', color = 'red')
-    p6.circle(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['COP, Data'], legend = 'Data', color = 'blue') 
+    p6.circle(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['COP, Data'], legend = 'Data', color = 'blue')
 
     p7 = figure(width=1600, height= 400, x_axis_label='Time (min)', y_axis_label = 'Energy Added Heat Pump (Btu)')
     p7.title.text_font_size = '12pt'
@@ -265,7 +291,7 @@ if Compare_To_MeasuredData == 1:
     p10.title.text_font_size = '12pt'
     p10.line(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Electricity Consumed, Model (W-h)'], legend = 'Model', color = 'red')
     p10.circle(x = Compare_To_MeasuredData['Time (min)'], y = Draw_Profile['Power Draw'] - Draw_Profile['Power Draw'].iloc[0], legend = 'Data', color = 'blue')
-    
+
     p = gridplot([[p1],[p2], [p3], [p4], [p5], [p6], [p7], [p8], [p9], [p10]])
     output_file(os.path.dirname(__file__) + os.sep + 'Validation Data\Validation Plots.html', title = 'Validation Data')
     save(p)
@@ -275,4 +301,3 @@ if Compare_To_MeasuredData == 1:
     PercentError_Gas = (Compare_To_MeasuredData['Energy Added Total (Btu)'].sum() - Compare_To_MeasuredData['Energy Added Heat Pump, Data (Btu)'].sum()) / Compare_To_MeasuredData['Energy Added, Data (Btu)'].sum() * 100
     PercentError_COP = (Compare_To_MeasuredData['COP Gas'].mean() - Compare_To_MeasuredData['COP, Data'].mean()) / Compare_To_MeasuredData['COP, Data'].mean() * 100
     PercentError_Electricity = (Compare_To_MeasuredData['Electricity Consumed, Model (W-h)'].iloc[-1] - ElectricityConsumption_Data) / ElectricityConsumption_Data * 100
-    
