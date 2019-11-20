@@ -1,0 +1,11 @@
+{
+  "base_url": "/", 
+  "hostname": "localhost", 
+  "notebook_dir": "C:\\Users\\aliu\\Documents\\CBECC", 
+  "password": false, 
+  "pid": 17400, 
+  "port": 8888, 
+  "secure": false, 
+  "token": "a39af8743a464664c0a95229f95fb1efe836ec8bcad3fc84", 
+  "url": "http://localhost:8888/"
+}

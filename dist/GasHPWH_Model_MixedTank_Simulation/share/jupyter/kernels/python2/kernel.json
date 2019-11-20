@@ -1,0 +1,11 @@
+{
+ "display_name": "Python 2", 
+ "language": "python", 
+ "argv": [
+  "C:\\ProgramData\\Anaconda2\\python.exe", 
+  "-m", 
+  "ipykernel_launcher", 
+  "-f", 
+  "{connection_file}"
+ ]
+}
