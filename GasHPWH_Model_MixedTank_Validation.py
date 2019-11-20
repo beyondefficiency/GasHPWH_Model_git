@@ -96,9 +96,18 @@ ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
 #Reading in the coefficients describing the COP of the gas HPWH as a function of the temperature of the water in the tank
 Coefficients_COP = np.fromfile(os.path.dirname(__file__) + os.sep + 'Coefficients' + os.sep + 'COP_Function_TReturn_F_6Nov2019.csv')
 
-#Stores the parameters in a list for use in the model
-Parameters = [Coefficient_JacketLoss, Power_Backup, Threshold_Activation_Backup, Threshold_Deactivation_Backup, FiringRate_HeatPump, Temperature_Tank_Set, Temperature_Tank_Set_Deadband, ThermalMass_Tank, ElectricityConsumption_Active, ElectricityConsumption_Idle, NOx_Production_Rate]
-
+#Stores the parameters in a list for use in the modelParameters = [Coefficient_JacketLoss, Power_Backup, Threshold_Activation_Backup, Threshold_Deactivation_Backup, FiringRate_HeatPump, Temperature_Tank_Set, Temperature_Tank_Set_Deadband, ThermalMass_Tank, ElectricityConsumption_Active, ElectricityConsumption_Idle, NOx_Production_Rate]
+Parameters = [Coefficient_JacketLoss,
+                Power_Backup,
+                Threshold_Activation_Backup,
+                Threshold_Deactivation_Backup,
+                FiringRate_HeatPump,
+                Temperature_Tank_Set,
+                Temperature_Tank_Set_Deadband,
+                ThermalMass_Tank,
+                ElectricityConsumption_Active,
+                ElectricityConsumption_Idle,
+                NOx_Production_Rate]
 #%%--------------------------MODELING-----------------------------------------
 
 #Creates a 1 dimensional regression stating the COP of the gas heat pump as a function of the temperature of water in the tank
@@ -271,9 +280,9 @@ if Compare_To_MeasuredData == 1:
     p = gridplot([[p1],[p2], [p3], [p4], [p5], [p6], [p7], [p8], [p9], [p10]])
     output_file(os.path.dirname(__file__) + os.sep + 'Validation Data\Validation Plots.html', title = 'Validation Data')
     save(p)
-    
+
     ElectricityConsumption_Data = Draw_Profile['Power Draw'].iloc[-2] - Draw_Profile.loc[0, 'Power Draw']
-    
+
     PercentError_Gas = (Compare_To_MeasuredData['Energy Added Total (Btu)'].sum() - Compare_To_MeasuredData['Energy Added Heat Pump, Data (Btu)'].sum()) / Compare_To_MeasuredData['Energy Added, Data (Btu)'].sum() * 100
     PercentError_COP = (Compare_To_MeasuredData['COP Gas'].mean() - Compare_To_MeasuredData['COP, Data'].mean()) / Compare_To_MeasuredData['COP, Data'].mean() * 100
     PercentError_Electricity = (Compare_To_MeasuredData['Electricity Consumed, Model (W-h)'].iloc[-1] - ElectricityConsumption_Data) / ElectricityConsumption_Data * 100
