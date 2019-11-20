@@ -79,7 +79,7 @@ Temperature_Supply_WaterHeater = 125 #Supply temperature of the water heater, in
 Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
 
 #Path_DrawProfile = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'Draw_Profiles' + os.sep + 'Profile_Single_{0}BR_CFA={1}_Weather={2}{3}_Setpoint={4}.csv'.format(str(Bedrooms),str(FloorArea_Conditioned),WeatherSource,ClimateZone,str(Temperature_Supply_WaterHeater))
-Path_DrawProfile ='Data' + os.sep + 'Draw_Profiles' + os.sep + 'Profile_Single_{0}BR_CFA={1}_Weather={2}{3}_Setpoint={4}.csv'.format(str(Bedrooms),str(FloorArea_Conditioned),WeatherSource,ClimateZone,str(Temperature_Supply_WaterHeater))
+Path_DrawProfile ='Data' + os.sep + 'Draw_Profiles' + os.sep + 'Profile_Single_{0}BR_CFA={1}_Weather={2}{3}_Setpoint={4}.csv'.format(str(Bedrooms),str(FloorArea_Conditioned),WeatherSource,ClimateZone,str(Temperature_Supply_WaterHeater)) # necessary for executable
 
 
 #These inputs are a series of constants describing the conditions of the simulation. The constants describing the gas HPWH itself come from communications with Alex of GTI, and may
@@ -126,12 +126,7 @@ FiringRate_HeatPump = FiringRate_HeatPump * W_To_BtuPerHour #Btu/hr
 ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
 
 #Reading in the coefficients describing the COP of the gas HPWH as a function of the temperature of the water in the tank
-#Coefficients_COP = np.fromfile(os.path.dirname(__file__) + os.sep + 'Coefficients' + os.sep + 'COP_Function_TReturn_F_6Nov2019.csv')
-df_COP = pd.read_csv('Coefficients' + os.sep +'COP_Function_TReturn_F_6Nov2019.csv')
-Coefficients_COP = df_COP.Coefficients.to_numpy()
-#print(Coefficient_COP)
-#Coefficients_COP = np.fromfile('COP_Function_TReturn_F_6Nov2019.csv')
-
+Coefficients_COP = np.genfromtxt('Coefficients' + os.sep + 'COP_Function_TReturn_F_6Nov2019.csv', delimiter=',') # Path edited for executable. np.genfromtxt to read in COP
 
 #Stores the parameters in a list for use in the model
 Parameters = [Coefficient_JacketLoss,
@@ -218,7 +213,7 @@ if not os.path.exists('Output'):
 
 with CodeTimer('write to csv'):
     #Model.to_csv(os.path.dirname(__file__) + os.sep + 'Output' + os.sep + 'Numpy_Output.csv', index = False) #Save the model to the declared file. This should probably be replaced with a dynamic file name for later use in parametric simulations
-    Model.to_csv('Output' + os.sep + 'Numpy_Output.csv', index = False) #Save the model to the declared file. This should probably be replaced with a dynamic file name for later use in parametric simulations
+    Model.to_csv('Output' + os.sep + 'Numpy_Output.csv', index = False) # Path edited for executable.
 
 #Model.to_csv(os.path.dirname(__file__) + os.sep + 'Output\Output.csv', index = False) #Save the model too the declared file. This should probably be replaced with a dynamic file name for later use in parametric simulations
-Model.to_csv('Output\Output.csv', index = False) #Save the model too the declared file. This should probably be replaced with a dynamic file name for later use in parametric simulations
+Model.to_csv('Output\Output.csv', index = False) # Path edited for executable.
