@@ -127,7 +127,17 @@ ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
 Coefficients_COP = np.fromfile(os.path.dirname(__file__) + os.sep + 'Coefficients' + os.sep + 'COP_Function_TReturn_F_6Nov2019.csv')
 
 #Stores the parameters in a list for use in the model
-Parameters = [Coefficient_JacketLoss, Power_Backup, Threshold_Activation_Backup, Threshold_Deactivation_Backup, FiringRate_HeatPump, Temperature_Tank_Set, Temperature_Tank_Set_Deadband, ThermalMass_Tank, ElectricityConsumption_Active, ElectricityConsumption_Idle, NOx_Production_Rate]
+Parameters = [Coefficient_JacketLoss,
+                Power_Backup,
+                Threshold_Activation_Backup,
+                Threshold_Deactivation_Backup,
+                FiringRate_HeatPump,
+                Temperature_Tank_Set,
+                Temperature_Tank_Set_Deadband,
+                ThermalMass_Tank,
+                ElectricityConsumption_Active,
+                ElectricityConsumption_Idle,
+                NOx_Production_Rate]
 
 #%%--------------------------MODELING-----------------------------------------
 
