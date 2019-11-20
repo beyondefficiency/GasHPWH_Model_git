@@ -105,12 +105,9 @@ Density_Water = 8.3176 #lb-m/gal @ 80 deg F, http://www.engineeringtoolbox.com/w
 #Constants used for unit conversions
 Hours_In_Day = 24 #The number of hours in a day
 Minutes_In_Hour = 60 #The number of minutes in an hour
-Hours_In_A_Minute = 0.01666666 #The number of minutes in an hour
 Seconds_In_Minute = 60 #The number of seconds in a minute
 W_To_BtuPerHour = 3.412142 #Converting from Watts to Btu/hr
 K_To_F_MagnitudeOnly = 1.8/1. #Converting from K/C to F. Only applicable for magnitudes, not actual temperatures (E.g. Yes for "A temperature difference of 10 C" but not for "The water temperature is 40 C")
-Btu_Per_CubicFoot_NaturalGas = 1015 #Energy density of natural gas, in Btu/ft^3
-Btu_Per_WattHour = 3.412142 #Conversion factor between Btu nad W-h
 
 #Calculating the NOx production rate of the HPWH when HP is active
 NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
@@ -126,7 +123,7 @@ ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
 #Reading in the coefficients describing the COP of the gas HPWH as a function of the temperature of the water in the tank
 Coefficients_COP = np.fromfile(os.path.dirname(__file__) + os.sep + 'Coefficients' + os.sep + 'COP_Function_TReturn_F_6Nov2019.csv')
 
-#Stores the parameters in a list for use in the model
+#Stores the parameters describing the HPWH in a list for use in the model
 Parameters = [Coefficient_JacketLoss, Power_Backup, Threshold_Activation_Backup, Threshold_Deactivation_Backup, FiringRate_HeatPump, Temperature_Tank_Set, Temperature_Tank_Set_Deadband, ThermalMass_Tank, ElectricityConsumption_Active, ElectricityConsumption_Idle, NOx_Production_Rate]
 
 #%%--------------------------MODELING-----------------------------------------
