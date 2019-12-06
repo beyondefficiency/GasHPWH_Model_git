@@ -55,9 +55,12 @@ Simulation time is 0.2520108222961426
 import pandas as pd
 import numpy as np
 import os
+import sys
 import time
 import GasHPWH_Model as GasHPWH
 from linetimer import CodeTimer
+import tkinter as tk
+from tkinter import filedialog
 
 #%%--------------------------INPUTS-------------------------------------------
 
@@ -79,8 +82,32 @@ Temperature_Supply_WaterHeater = 125 #Supply temperature of the water heater, in
 Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
 
 #Path_DrawProfile = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'Draw_Profiles' + os.sep + 'Profile_Single_{0}BR_CFA={1}_Weather={2}{3}_Setpoint={4}.csv'.format(str(Bedrooms),str(FloorArea_Conditioned),WeatherSource,ClimateZone,str(Temperature_Supply_WaterHeater))
-Path_DrawProfile ='Data' + os.sep + 'Draw_Profiles' + os.sep + 'Profile_Single_{0}BR_CFA={1}_Weather={2}{3}_Setpoint={4}.csv'.format(str(Bedrooms),str(FloorArea_Conditioned),WeatherSource,ClimateZone,str(Temperature_Supply_WaterHeater)) # necessary for executable
 
+# used in --onefile exe
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+#Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
+#Path_DrawProfile = askopenfilename() # show an "Open" dialog box and return the path to the selected file
+
+DrawProfile_app = tk.Tk()
+DrawProfile_app.withdraw()
+my_filetypes = [('all files', '.csv')]
+Path_DrawProfile = filedialog.askopenfilename(parent=DrawProfile_app,
+                                    initialdir=os.getcwd(),
+                                    title="Please select the Draw Profile:",
+                                    filetypes=my_filetypes)
+
+
+#Path_DrawProfile =resource_path('Data' + os.sep + 'Draw_Profiles' + os.sep + 'Profile_Single_{0}BR_CFA={1}_Weather={2}{3}_Setpoint={4}.csv'.format(str(Bedrooms),str(FloorArea_Conditioned),WeatherSource,ClimateZone,str(Temperature_Supply_WaterHeater))) # necessary for --onefile executable
+#Path_DrawProfile ='Data' + os.sep + 'Draw_Profiles' + os.sep + 'Profile_Single_{0}BR_CFA={1}_Weather={2}{3}_Setpoint={4}.csv'.format(str(Bedrooms),str(FloorArea_Conditioned),WeatherSource,ClimateZone,str(Temperature_Supply_WaterHeater)) # necessary for --onedir executable
 
 #These inputs are a series of constants describing the conditions of the simulation. The constants describing the gas HPWH itself come from communications with Alex of GTI, and may
 #need to be updated if he sends new values
@@ -126,7 +153,46 @@ FiringRate_HeatPump = FiringRate_HeatPump * W_To_BtuPerHour #Btu/hr
 ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
 
 #Reading in the coefficients describing the COP of the gas HPWH as a function of the temperature of the water in the tank
-Coefficients_COP = np.genfromtxt('Coefficients' + os.sep + 'COP_Function_TReturn_F_6Nov2019.csv', delimiter=',') # Path edited for executable. np.genfromtxt to read in COP
+#Coefficients_COP = np.genfromtxt('Coefficients' + os.sep + 'COP_Function_TReturn_F_6Nov2019.csv', delimiter=',') # Path edited for executable. np.genfromtxt to read in COP --onedir
+#Coefficients_COP = np.genfromtxt(resource_path('Coefficients' + os.sep + 'COP_Function_TReturn_F_6Nov2019.csv'), delimiter=',') #--onefile
+#tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
+#Coefficients_COP = np.genfromtxt(resource_path(askopenfilename()), delimiter=',') # show an "Open" dialog box and return the path to the selected file
+#Coefficients_COP = np.genfromtxt(resource_path(filedialog.askopenfilename(parent=application_window,
+#                                initialdir=os.getcwd(),
+#                                title="Please select the COP:",
+#                                filetypes=my_filetypes)), delimiter=',')
+
+class COP_app:
+    def __init__(self, master):
+        self.master = master
+#        tk.Tk.__init__(self)
+        self.label_COP1 = tk.Label(master, text="Coefficient 1: ")
+        self.label_COP1.grid(row=1, column=1)
+        self.entry_COP1 = tk.Entry(master)
+        self.entry_COP1.grid(row=1, column=2)
+        self.label_COP2 = tk.Label(master, text="Coefficient 2: ")
+        self.label_COP2.grid(row=2, column=1)
+        self.entry_COP2 = tk.Entry(master)
+        self.entry_COP2.grid(row=2, column=2)        
+        self.button_submit=tk.Button(master, text = "Submit", command=self.on_button)
+        self.button_submit.grid(row=3, columnspan=2)
+        self.COP = np.zeros(2)
+
+        self.close_button = tk.Button(master, text="Close", command=master.quit)
+        self.close_button.grid(row=4, columnspan=2)
+        
+    def on_button(self):
+#        print(self.entry.get())
+        self.COP[0] = self.entry_COP1.get()
+        self.COP[1] = self.entry_COP2.get()
+        print(self.COP)
+     
+root = tk.Tk()
+cop_app = COP_app(root)
+root.mainloop()
+
+Coefficients_COP= cop_app.COP
+
 
 #Stores the parameters in a list for use in the model
 Parameters = [Coefficient_JacketLoss,
