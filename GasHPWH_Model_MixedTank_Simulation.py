@@ -165,15 +165,16 @@ ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
 class COP_app:
     def __init__(self, master):
         self.master = master
-#        tk.Tk.__init__(self)
         self.label_COP1 = tk.Label(master, text="Coefficient 1: ")
         self.label_COP1.grid(row=1, column=1)
         self.entry_COP1 = tk.Entry(master)
         self.entry_COP1.grid(row=1, column=2)
+        
         self.label_COP2 = tk.Label(master, text="Coefficient 2: ")
         self.label_COP2.grid(row=2, column=1)
         self.entry_COP2 = tk.Entry(master)
-        self.entry_COP2.grid(row=2, column=2)        
+        self.entry_COP2.grid(row=2, column=2)   
+        
         self.button_submit=tk.Button(master, text = "Submit", command=self.on_button)
         self.button_submit.grid(row=3, columnspan=2)
         self.COP = np.zeros(2)
@@ -182,7 +183,6 @@ class COP_app:
         self.close_button.grid(row=4, columnspan=2)
         
     def on_button(self):
-#        print(self.entry.get())
         self.COP[0] = self.entry_COP1.get()
         self.COP[1] = self.entry_COP2.get()
         print(self.COP)
