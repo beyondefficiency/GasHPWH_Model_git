@@ -2,8 +2,6 @@
 """
 Created on Mon Apr 01 12:53:33 2019
 
-Nathan Testign Git functionality
-
 This script represents a model of GTI's gas HPWH. It is currently capable of being run using draw profile information from
 either CBECC-Res or GTI's field monitoring project. It also currently has two modes, one where it simply predicts the performance
 of a device over a given draw profile, and a second where it compares the performance of the device to that which is observed
@@ -51,7 +49,7 @@ Code block 'final changes to Model' took: 5.19892 ms
 Code block 'write to csv' took: 38.57653 ms
 Simulation time is 0.2520108222961426
 
-- niltis
+@author: niltis
 """
 #%%--------------------------IMPORT STATEMENTS--------------------------------
 
