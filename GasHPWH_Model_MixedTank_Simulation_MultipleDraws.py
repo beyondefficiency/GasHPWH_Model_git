@@ -2,7 +2,7 @@
 """
 Created on Mon Apr 01 12:53:33 2019
 
-Nathan tripple-checking Git functionality
+Nathan double-checking Git functionality
 
 This script represents a model of GTI's gas HPWH. It is currently capable of being run using draw profile information from
 either CBECC-Res or GTI's field monitoring project. It also currently has two modes, one where it simply predicts the performance
