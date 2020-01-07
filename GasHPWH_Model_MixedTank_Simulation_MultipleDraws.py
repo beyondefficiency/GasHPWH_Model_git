@@ -278,10 +278,10 @@ for current_profile in All_Variable_Dicts:
         # with CodeTimer('write to csv'): #for testing
         # Model.to_csv(os.path.dirname(__file__) + os.sep + 'Output' + os.sep + 'Numpy_Output.csv', index = False) #for_testing
         # Model.to_csv(os.path.dirname(__file__) + os.sep + 'Output' + os.sep + 'Output.csv', index = False) #Save the model too the declared file. This should probably be replaced with a dynamic file name for later use in parametric simulations
-        Model.to_csv(Path_DrawProfile_Base_Output_Path + os.sep + 'OUTPUT_' + current_profile, index = False)
+        Model.to_csv(Path_DrawProfile_Base_Output_Path + os.sep + 'OUTPUT_2_' + current_profile, index = False)
 
-kWh_Dataframe.to_csv(Path_Summary_Output + os.sep + 'kWh_Usage_Summary.csv')
-Therms_Dataframe.to_csv(Path_Summary_Output + os.sep + 'Therms_Usage_Summary.csv')
+kWh_Dataframe.to_csv(Path_Summary_Output + os.sep + 'kWh_Usage_Summary_2.csv')
+Therms_Dataframe.to_csv(Path_Summary_Output + os.sep + 'Therms_Usage_Summary_2.csv')
 
 End_Time = time.time() #begin to time the script
-print('script ran{0} draw profiles in {1} seconds'.format(count,(End_Time - Start_Time)/1000))
+print('script ran{0} draw profiles in {1} seconds'.format(count,(End_Time - Start_Time)))
