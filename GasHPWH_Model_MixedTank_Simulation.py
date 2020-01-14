@@ -94,8 +94,6 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-#Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
-#Path_DrawProfile = askopenfilename() # show an "Open" dialog box and return the path to the selected file
 
 DrawProfile_app = tk.Tk()
 DrawProfile_app.withdraw()
@@ -105,9 +103,6 @@ Path_DrawProfile = filedialog.askopenfilename(parent=DrawProfile_app,
                                     title="Please select the Draw Profile:",
                                     filetypes=my_filetypes)
 
-
-#Path_DrawProfile =resource_path('Data' + os.sep + 'Draw_Profiles' + os.sep + 'Profile_Single_{0}BR_CFA={1}_Weather={2}{3}_Setpoint={4}.csv'.format(str(Bedrooms),str(FloorArea_Conditioned),WeatherSource,ClimateZone,str(Temperature_Supply_WaterHeater))) # necessary for --onefile executable
-#Path_DrawProfile ='Data' + os.sep + 'Draw_Profiles' + os.sep + 'Profile_Single_{0}BR_CFA={1}_Weather={2}{3}_Setpoint={4}.csv'.format(str(Bedrooms),str(FloorArea_Conditioned),WeatherSource,ClimateZone,str(Temperature_Supply_WaterHeater)) # necessary for --onedir executable
 
 #These inputs are a series of constants describing the conditions of the simulation. The constants describing the gas HPWH itself come from communications with Alex of GTI, and may
 #need to be updated if he sends new values
@@ -155,12 +150,6 @@ ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
 #Reading in the coefficients describing the COP of the gas HPWH as a function of the temperature of the water in the tank
 #Coefficients_COP = np.genfromtxt('Coefficients' + os.sep + 'COP_Function_TReturn_F_6Nov2019.csv', delimiter=',') # Path edited for executable. np.genfromtxt to read in COP --onedir
 #Coefficients_COP = np.genfromtxt(resource_path('Coefficients' + os.sep + 'COP_Function_TReturn_F_6Nov2019.csv'), delimiter=',') #--onefile
-#tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
-#Coefficients_COP = np.genfromtxt(resource_path(askopenfilename()), delimiter=',') # show an "Open" dialog box and return the path to the selected file
-#Coefficients_COP = np.genfromtxt(resource_path(filedialog.askopenfilename(parent=application_window,
-#                                initialdir=os.getcwd(),
-#                                title="Please select the COP:",
-#                                filetypes=my_filetypes)), delimiter=',')
 
 class COP_app:
     def __init__(self, master):
@@ -278,8 +267,6 @@ if not os.path.exists('Output'):
     os.makedirs('Output')
 
 with CodeTimer('write to csv'):
-    #Model.to_csv(os.path.dirname(__file__) + os.sep + 'Output' + os.sep + 'Numpy_Output.csv', index = False) #Save the model to the declared file. This should probably be replaced with a dynamic file name for later use in parametric simulations
     Model.to_csv('Output' + os.sep + 'Numpy_Output.csv', index = False) # Path edited for executable.
 
-#Model.to_csv(os.path.dirname(__file__) + os.sep + 'Output\Output.csv', index = False) #Save the model too the declared file. This should probably be replaced with a dynamic file name for later use in parametric simulations
 Model.to_csv('Output\Output.csv', index = False) # Path edited for executable.
