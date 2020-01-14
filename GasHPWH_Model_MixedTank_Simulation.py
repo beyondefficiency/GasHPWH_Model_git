@@ -106,20 +106,153 @@ Path_DrawProfile = filedialog.askopenfilename(parent=DrawProfile_app,
 
 #These inputs are a series of constants describing the conditions of the simulation. The constants describing the gas HPWH itself come from communications with Alex of GTI, and may
 #need to be updated if he sends new values
-Temperature_Tank_Initial = 135 #Deg F, initial temperature of water in the storage tank
-Temperature_Tank_Set = 135 #Deg F, set temperature of the HPWH
-Temperature_Tank_Set_Deadband = 35 #Deg F, deadband on the thermostat
-Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation
-Temperature_Ambient = 68 #deg F, temperature of the ambient air, placeholder for now
-Volume_Tank = 73 #gal, volume of water held in the storage tank
-Coefficient_JacketLoss = 5.75 #W/K, based on e-mail from Alex Fridyland on 29 Mar 2019
-Power_Backup = 0 #W, electricity consumption of the backup resistance elements
-Threshold_Activation_Backup = 95 #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
-Threshold_Deactivation_Backup = 115 #Deg F, sets the temperature when the backup element disengages after it has been engaged
-FiringRate_HeatPump = 2930.72 #W, heat consumed by the heat pump
-ElectricityConsumption_Active = 158.5 #W, electricity consumed by the fan when the heat pump is running
-ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
-NOx_Output = 10 #ng/J, NOx production of the HP when active
+class Inputs:
+    def __init__(self, master):
+        self.master = master
+
+        self.label_Temperature_Tank_Initial = tk.Label(master, text="Initial Tank Temperature (Deg F): ")
+        self.label_Temperature_Tank_Initial.grid(row=1, column=1)
+        self.entry_Temperature_Tank_Initial = tk.Entry(master)
+        self.entry_Temperature_Tank_Initial.insert(0, 135)
+        self.entry_Temperature_Tank_Initial.grid(row=1, column=2)
+        
+        self.label_Temperature_Tank_Set = tk.Label(master, text="Tank Temperature Setpoint (Deg F): ")
+        self.label_Temperature_Tank_Set.grid(row=2, column=1)
+        self.entry_Temperature_Tank_Set = tk.Entry(master)
+        self.entry_Temperature_Tank_Set.insert(0, 135)
+        self.entry_Temperature_Tank_Set.grid(row=2, column=2)
+        
+        self.label_Temperature_Tank_Set_Deadband = tk.Label(master, text="Tank Temperature Deadband Setpoint (Deg F): ")
+        self.label_Temperature_Tank_Set_Deadband.grid(row=3, column=1)
+        self.entry_Temperature_Tank_Set_Deadband = tk.Entry(master)
+        self.entry_Temperature_Tank_Set_Deadband.grid(row=3, column=2)
+        
+        self.label_Temperature_Water_Inlet = tk.Label(master, text="Inlet Water Temperature (Deg F): ")
+        self.label_Temperature_Water_Inlet.grid(row=4, column=1)
+        self.entry_Temperature_Water_Inlet = tk.Entry(master)
+        self.entry_Temperature_Water_Inlet.grid(row=4, column=2)
+        
+        self.label_Temperature_Ambient = tk.Label(master, text="Ambient Temperature (Deg F): ")
+        self.label_Temperature_Ambient.grid(row=5, column=1)
+        self.entry_Temperature_Ambient = tk.Entry(master)
+        self.entry_Temperature_Ambient.grid(row=5, column=2)
+        
+        self.label_Volume_Tank = tk.Label(master, text="Tank Volume (gal): ")
+        self.label_Volume_Tank.grid(row=6, column=1)
+        self.entry_Volume_Tank = tk.Entry(master)
+        self.entry_Volume_Tank.grid(row=6, column=2)
+        
+        self.label_Coefficient_JacketLoss = tk.Label(master, text="JacketLoss Coefficient (W/K): ")
+        self.label_Coefficient_JacketLoss.grid(row=7, column=1)
+        self.entry_Coefficient_JacketLoss = tk.Entry(master)
+        self.entry_Coefficient_JacketLoss.grid(row=7, column=2)
+        
+        self.label_Power_Backup = tk.Label(master, text="Backup Power (W): ")
+        self.label_Power_Backup.grid(row=8, column=1)
+        self.entry_Power_Backup = tk.Entry(master)
+        self.entry_Power_Backup.grid(row=8, column=2)
+        
+        self.label_Threshold_Activation_Backup = tk.Label(master, text="Backup Activation Threshold (Deg F): ")
+        self.label_Threshold_Activation_Backup.grid(row=9, column=1)
+        self.entry_Threshold_Activation_Backup = tk.Entry(master)
+        self.entry_Threshold_Activation_Backup.grid(row=9, column=2)
+        
+        self.label_Threshold_Deactivation_Backup = tk.Label(master, text="Backup Deactivation Threshold (Deg F): ")
+        self.label_Threshold_Deactivation_Backup.grid(row=10, column=1)
+        self.entry_Threshold_Deactivation_Backup = tk.Entry(master)
+        self.entry_Threshold_Deactivation_Backup.grid(row=10, column=2)
+        
+        self.label_Coefficient_JacketLoss = tk.Label(master, text="Backup Deactivation Threshold (Deg F): ")
+        self.label_Coefficient_JacketLoss.grid(row=11, column=1)
+        self.entry_Coefficient_JacketLoss = tk.Entry(master)
+        self.entry_Coefficient_JacketLoss.grid(row=11, column=2)
+        
+        self.label_FiringRate_HeatPump = tk.Label(master, text="Heat Consumed by Heat Pump/Firing rate (W): ")
+        self.label_FiringRate_HeatPump.grid(row=12, column=1)
+        self.entry_FiringRate_HeatPump = tk.Entry(master)
+        self.entry_FiringRate_HeatPump.insert(0, 2930.72)
+        self.entry_FiringRate_HeatPump.grid(row=12, column=2)
+        
+        self.label_ElectricityConsumption_Active = tk.Label(master, text="Active Electricity Consumption (W) ")
+        self.label_ElectricityConsumption_Active.grid(row=13, column=1)
+        self.entry_ElectricityConsumption_Active = tk.Entry(master)
+        self.entry_ElectricityConsumption_Active.grid(row=13, column=2)
+        
+        self.label_ElectricityConsumption_Idle= tk.Label(master, text="Idle Electricity Consumption (W): ")
+        self.label_ElectricityConsumption_Idle.grid(row=14, column=1)
+        self.entry_ElectricityConsumption_Idle = tk.Entry(master)
+        self.entry_ElectricityConsumption_Idle.grid(row=14, column=2)
+        
+        self.label_NOx_Output= tk.Label(master, text="NOx Output (ng/J): ")
+        self.label_NOx_Output.grid(row=15, column=1)
+        self.entry_NOx_Output = tk.Entry(master)
+        self.entry_NOx_Output.grid(row=15, column=2)
+        
+        
+        self.button_submit=tk.Button(master, text = "Submit", command=self.on_button)
+        self.button_submit.grid(row=16, columnspan=2)
+        
+        
+        #These inputs are a series of constants describing the conditions of the simulation. The constants describing the gas HPWH itself come from communications with Alex of GTI, and may
+        #need to be updated if he sends new values
+        # Set initial values
+        self.Temperature_Tank_Initial = 135 #Deg F, initial temperature of water in the storage tank
+        self.Temperature_Tank_Set = 135 #Deg F, set temperature of the HPWH
+        self.Temperature_Tank_Set_Deadband = 35 #Deg F, deadband on the thermostat
+        self.Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation
+        self.Temperature_Ambient = 68 #deg F, temperature of the ambient air, placeholder for now
+        self.Volume_Tank = 73 #gal, volume of water held in the storage tank
+        self.Coefficient_JacketLoss = 5.75 #W/K, based on e-mail from Alex Fridyland on 29 Mar 2019
+        self.Power_Backup = 0 #W, electricity consumption of the backup resistance elements
+        self.Threshold_Activation_Backup = 95 #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
+        self.Deactivation_Backup = 115 #Deg F, sets the temperature when the backup element disengages after it has been engaged
+        self.FiringRate_HeatPump = 2930.72 #W, heat consumed by the heat pump
+        self.ElectricityConsumption_Active = 158.5 #W, electricity consumed by the fan when the heat pump is running
+        self.ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
+        self.NOx_Output = 10 #ng/J, NOx production of the HP when active
+
+        self.close_button = tk.Button(master, text="Close", command=master.quit)
+        self.close_button.grid(row=17, columnspan=2)
+        
+    def on_button(self):
+        self.Temperature_Tank_Initial = int(self.entry_Temperature_Tank_Initial.get())
+        self.Temperature_Tank_Set = int(self.entry_Temperature_Tank_Set.get())
+        self.Temperature_Tank_Set_Deadband = int(self.entry_Temperature_Tank_Set_Deadband.get())
+        self.Temperature_Water_Inlet = int(self.entry_Temperature_Water_Inlet.get())
+        self.Temperature_Ambient = int(self.entry_Temperature_Ambient.get())
+        self.Volume_Tank = int(self.entry_Volume_Tank.get())
+        self.Coefficient_JacketLoss = float(self.entry_Coefficient_JacketLoss.get())
+        self.Power_Backup = int(self.entry_Power_Backup.get())
+        self.Threshold_Activation_Backup = int(self.entry_Threshold_Activation_Backup.get())
+        self.Threshold_Deactivation_Backup = int(self.entry_Threshold_Deactivation_Backup.get())
+        self.FiringRate_HeatPump = float(self.entry_FiringRate_HeatPump.get())
+        self.ElectricityConsumption_Active = float(self.entry_ElectricityConsumption_Active.get())
+        self.ElectricityConsumption_Idle = float(self.entry_ElectricityConsumption_Idle.get())
+        self.NOx_Output = int(self.entry_NOx_Output.get())
+        print(self.Temperature_Tank_Initial)
+        print(self.Temperature_Tank_Set)
+     
+root = tk.Tk()
+inputs = Inputs(root)
+root.mainloop()
+
+
+Temperature_Tank_Initial = inputs.Temperature_Tank_Initial #Deg F, initial temperature of water in the storage tank
+Temperature_Tank_Set = inputs.Temperature_Tank_Set #Deg F, set temperature of the HPWH
+Temperature_Tank_Set_Deadband = inputs.Temperature_Tank_Set_Deadband #Deg F, deadband on the thermostat
+Temperature_Water_Inlet = inputs.Temperature_Water_Inlet #Deg F, inlet water temperature in this simulation
+Temperature_Ambient = inputs.Temperature_Ambient #deg F, temperature of the ambient air, placeholder for now
+Volume_Tank = inputs.Volume_Tank #gal, volume of water held in the storage tank
+Coefficient_JacketLoss = inputs.Coefficient_JacketLoss #W/K, based on e-mail from Alex Fridyland on 29 Mar 2019
+Power_Backup = inputs.Power_Backup #W, electricity consumption of the backup resistance elements
+Threshold_Activation_Backup = inputs.Threshold_Activation_Backup #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
+Threshold_Deactivation_Backup = inputs.Threshold_Deactivation_Backup #Deg F, sets the temperature when the backup element disengages after it has been engaged
+FiringRate_HeatPump = inputs.FiringRate_HeatPump #W, heat consumed by the heat pump
+ElectricityConsumption_Active = inputs.ElectricityConsumption_Active #W, electricity consumed by the fan when the heat pump is running
+ElectricityConsumption_Idle = inputs.ElectricityConsumption_Idle #W, electricity consumed by the HPWH when idle
+NOx_Output = inputs.NOx_Output #ng/J, NOx production of the HP when active
+print(type(NOx_Output))
+print(type(FiringRate_HeatPump))
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
 #Constants used in water-based calculations
