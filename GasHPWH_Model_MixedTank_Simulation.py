@@ -287,22 +287,25 @@ ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
 class COP_app:
     def __init__(self, master):
         self.master = master
+        self.text = tk.Label(master, text="These coefficients describe the Coefficient of Performance (COP) of the heat pump.\n\n The equation is as follows:\nCOP = COP1 * water temp + COP2\n")
+        self.text.grid(row=1, columnspan=2)
+        
         self.label_COP1 = tk.Label(master, text="Coefficient 1: ")
-        self.label_COP1.grid(row=1, column=1)
+        self.label_COP1.grid(row=2, column=1)
         self.entry_COP1 = tk.Entry(master)
-        self.entry_COP1.grid(row=1, column=2)
+        self.entry_COP1.grid(row=2, column=2)
         
         self.label_COP2 = tk.Label(master, text="Coefficient 2: ")
-        self.label_COP2.grid(row=2, column=1)
+        self.label_COP2.grid(row=3, column=1)
         self.entry_COP2 = tk.Entry(master)
-        self.entry_COP2.grid(row=2, column=2)   
+        self.entry_COP2.grid(row=3, column=2)   
         
         self.button_submit=tk.Button(master, text = "Submit", command=self.on_button)
-        self.button_submit.grid(row=3, columnspan=2)
+        self.button_submit.grid(row=4, columnspan=2)
         self.COP = np.zeros(2)
 
         self.close_button = tk.Button(master, text="Close", command=master.quit)
-        self.close_button.grid(row=4, columnspan=2)
+        self.close_button.grid(row=5, columnspan=2)
         
     def on_button(self):
         self.COP[0] = self.entry_COP1.get()
