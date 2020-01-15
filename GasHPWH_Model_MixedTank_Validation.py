@@ -39,8 +39,7 @@ from linetimer import CodeTimer
 #to the data set itself. This means you should fill in the path with the specific location of your data file. Note that this
 #can be done directly on SharePoint, but it works much better if you sync the folder to your hard drive
 #The second variable states the source of the draw profile data. Right now the model is capable of handling CBECC-Res draw profiles,
-#generated using our scripts, and data from GTI's field study on these devices. The comment after Type_DrawProfile states
-#the possible options
+#generated using our scripts, and data from GTI's field study on these devices. 
 
 Path_DrawProfile = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'GTI' + os.sep + 'Calibration Dataset 1.0 for Frontier - Site 4 (May-June 2019) CONFIDENTIAL.csv'
 
