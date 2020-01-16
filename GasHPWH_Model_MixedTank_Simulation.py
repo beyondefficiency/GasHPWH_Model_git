@@ -242,8 +242,6 @@ class Inputs:
         self.ElectricityConsumption_Active = float(self.entry_ElectricityConsumption_Active.get())
         self.ElectricityConsumption_Idle = float(self.entry_ElectricityConsumption_Idle.get())
         self.NOx_Output = int(self.entry_NOx_Output.get())
-        print(self.Temperature_Tank_Initial)
-        print(self.Temperature_Tank_Set)
      
 root_inputs = tk.Tk()
 inputs = Inputs(root_inputs)
@@ -283,7 +281,9 @@ ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
 class COP_app:
     def __init__(self, master):
         self.master = master
-        self.title('Coefficient of Performance')
+        
+        self.master.title('Coefficient of Performance')
+        
         self.text = tk.Label(master, text="These coefficients describe the Coefficient of Performance (COP) of the heat pump.\n\n The equation is as follows:\nCOP = (COP1 x water temp) + COP2\n")
         self.text.grid(row=1, columnspan=3)
         
@@ -309,7 +309,6 @@ class COP_app:
     def submit_COP(self):
         self.COP[0] = self.entry_COP1.get()
         self.COP[1] = self.entry_COP2.get()
-        print(self.COP)
      
 root_COP = tk.Tk()
 cop_app = COP_app(root_COP)
@@ -410,8 +409,10 @@ Model['Timestep (min)'] = Timestep
 Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
 
 #%%--------------------------WRITE RESULTS TO FILE-----------------------------------------
-
+# Make output dir if it doesn't already exist:
+if not os.path.exists('Output'):
+    os.makedirs('Output')
 Model.to_csv(Path_DrawProfile_Output, index = False) #Save the model to the declared file.
-Model.to_csv('Output\Output.csv', index = False) # Path edited for executable.
+
 End_Time = time.time() #begin to time the script
 print('script ran in {0} seconds'.format((End_Time - Start_Time)/1000))
