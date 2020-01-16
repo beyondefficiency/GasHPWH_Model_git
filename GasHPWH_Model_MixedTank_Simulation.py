@@ -69,7 +69,7 @@ Start_Time = time.time() #begin to time the script
 #%%--------------------------USER INPUTS----------------------------------------
 Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
 vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
-Path_DrawProfile_Output_Base_Path = os.path.dirname(__file__) + os.sep + 'Output'
+Path_DrawProfile_Output_Base_Path = 'Output'
 Path_DrawProfile_Output_File_Name = 'Output_{0}.csv'.format(datetime.now().strftime("%d%m%Y%H%M%S")) #mark output by time run
 Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
 
@@ -112,6 +112,8 @@ class Inputs:
     def __init__(self, master):
         self.master = master
 
+        self.master.title('Inputs')
+        
         self.label_Temperature_Tank_Initial = tk.Label(master, text="Initial Tank Temperature (Deg F): ")
         self.label_Temperature_Tank_Initial.grid(row=1, column=1)
         self.entry_Temperature_Tank_Initial = tk.Entry(master)
@@ -197,7 +199,7 @@ class Inputs:
         self.entry_NOx_Output.grid(row=14, column=2)
         
         
-        self.button_submit=tk.Button(master, text = "Submit", command=self.on_button)
+        self.button_submit=tk.Button(master, text = "Submit", command=self.submit_inputs)
         self.button_submit.grid(row=15, columnspan=2)
         
         
@@ -219,10 +221,13 @@ class Inputs:
         self.ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
         self.NOx_Output = 10 #ng/J, NOx production of the HP when active
 
-        self.close_button = tk.Button(master, text="Close", command=master.quit)
+        self.close_button = tk.Button(master, text="Next", command=master.quit)
         self.close_button.grid(row=17, columnspan=2)
+#        
+#    def close(self):
+#        self.master.destroy()
         
-    def on_button(self):
+    def submit_inputs(self):
         self.Temperature_Tank_Initial = int(self.entry_Temperature_Tank_Initial.get())
         self.Temperature_Tank_Set = int(self.entry_Temperature_Tank_Set.get())
         self.Temperature_Tank_Set_Deadband = int(self.entry_Temperature_Tank_Set_Deadband.get())
@@ -240,9 +245,9 @@ class Inputs:
         print(self.Temperature_Tank_Initial)
         print(self.Temperature_Tank_Set)
      
-root = tk.Tk()
-inputs = Inputs(root)
-root.mainloop()
+root_inputs = tk.Tk()
+inputs = Inputs(root_inputs)
+root_inputs.mainloop()
 
 
 Temperature_Tank_Initial = inputs.Temperature_Tank_Initial #Deg F, initial temperature of water in the storage tank
@@ -278,35 +283,37 @@ ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
 class COP_app:
     def __init__(self, master):
         self.master = master
+        self.title('Coefficient of Performance')
         self.text = tk.Label(master, text="These coefficients describe the Coefficient of Performance (COP) of the heat pump.\n\n The equation is as follows:\nCOP = (COP1 x water temp) + COP2\n")
         self.text.grid(row=1, columnspan=3)
         
-        self.label_COP1 = tk.Label(master, text="Coefficient 1: ")
+        self.label_COP1 = tk.Label(master, text="COP1: ")
         self.label_COP1.grid(row=2, column=1)
         self.entry_COP1 = tk.Entry(master)
         self.entry_COP1.grid(row=2, column=2)
         
-        self.label_COP2 = tk.Label(master, text="Coefficient 2: ")
+        self.label_COP2 = tk.Label(master, text="COP2: ")
         self.label_COP2.grid(row=3, column=1)
         self.entry_COP2 = tk.Entry(master)
         self.entry_COP2.grid(row=3, column=2)   
         
         self.COP = np.zeros(2)
         
-        self.button_submit=tk.Button(master, text = "Submit", command=self.on_button)
+        self.button_submit=tk.Button(master, text = "Submit", command=self.submit_COP)
         self.button_submit.grid(row=5, columnspan=3)
 
         self.close_button = tk.Button(master, text="Close", command=master.quit)
         self.close_button.grid(row=6, columnspan=3)
         
-    def on_button(self):
+        
+    def submit_COP(self):
         self.COP[0] = self.entry_COP1.get()
         self.COP[1] = self.entry_COP2.get()
         print(self.COP)
      
-root = tk.Tk()
-cop_app = COP_app(root)
-root.mainloop()
+root_COP = tk.Tk()
+cop_app = COP_app(root_COP)
+root_COP.mainloop()
 
 Coefficients_COP= cop_app.COP
 #Creates a 1 dimensional regression stating the COP of the gas heat pump as a function of the temperature of water in the tank
@@ -326,6 +333,8 @@ Parameters = [Coefficient_JacketLoss,
                 ElectricityConsumption_Idle,
                 NOx_Production_Rate]
 
+root_COP.destroy()
+root_inputs.destroy()
 # with CodeTimer('CFA = {0}, Climate Zone = {1}'.format(FloorArea_Conditioned, ClimateZone)): #for testing - indent below code if using
 
 #%%--------------------------MODELING-----------------------------------------
@@ -401,9 +410,6 @@ Model['Timestep (min)'] = Timestep
 Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
 
 #%%--------------------------WRITE RESULTS TO FILE-----------------------------------------
-Path_DrawProfile_Output_Base_Path = 'Output'
-Path_DrawProfile_Output_File_Name = 'Output_{0}.csv'.format(datetime.now().strftime("%d-%m-%Y %H:%M:%S")) #mark output by time run
-Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
 
 Model.to_csv(Path_DrawProfile_Output, index = False) #Save the model to the declared file.
 Model.to_csv('Output\Output.csv', index = False) # Path edited for executable.
