@@ -69,6 +69,10 @@ Start_Time = time.time() #begin to time the script
 #%%--------------------------USER INPUTS----------------------------------------
 Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
 vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
+Path_DrawProfile_Output_Base_Path = os.path.dirname(__file__) + os.sep + 'Output'
+Path_DrawProfile_Output_File_Name = 'Output_{0}.csv'.format(datetime.now().strftime("%d%m%Y%H%M%S")) #mark output by time run
+Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
+
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
 
 #Constants used in water-based calculations
@@ -404,4 +408,4 @@ Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_Draw
 Model.to_csv(Path_DrawProfile_Output, index = False) #Save the model to the declared file.
 Model.to_csv('Output\Output.csv', index = False) # Path edited for executable.
 End_Time = time.time() #begin to time the script
-print('script ran in {1} seconds'.format((End_Time - Start_Time)/1000))
+print('script ran in {0} seconds'.format((End_Time - Start_Time)/1000))
