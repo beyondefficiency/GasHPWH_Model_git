@@ -92,7 +92,7 @@ Path_DrawProfile = Path_DrawProfile_Base_Path + os.sep + Path_DrawProfile_File_N
 # Path_DrawProfile_Base_Path = '/Users/nathanieliltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Draw Profiles'
 # Path_DrawProfile_Base_Output_Path = '/Users/nathanieliltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Individual Outputs of Simulation Model'
 Path_DrawProfile_Output_Base_Path = os.path.dirname(__file__) + os.sep + 'Output'
-Path_DrawProfile_Output_File_Name = 'Output_{0}.csv'.format(datetime.now().strftime("%d-%m-%Y %H:%M:%S")) #mark output by time run
+Path_DrawProfile_Output_File_Name = 'Output_{0}.csv'.format(datetime.now().strftime("%d%m%Y%H%M%S")) #mark output by time run
 Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
@@ -229,4 +229,4 @@ Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
 Model.to_csv(Path_DrawProfile_Output, index = False) #Save the model to the declared file.
 
 End_Time = time.time() #begin to time the script
-print('script ran in {1} seconds'.format((End_Time - Start_Time)/1000))
+print('script ran in {0} seconds'.format((End_Time - Start_Time)/1000))
