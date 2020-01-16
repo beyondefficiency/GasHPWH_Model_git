@@ -1,4 +1,4 @@
-Day,Day Of Year (Day),Start Time of Day (hr),Start Time of Year (hr),Fixture,Mains Temperature (deg F),Duration (min),Fraction Hot Water,Hot Water Flow Rate (gal/min),Hot Water Volume (gal),Setpoint_WaterHeater
+Day,Day of Year (Day),Start Time of Day (hr),Start time (hr),Fixture,Mains Temperature (deg F),Duration (min),Fraction Hot Water,Hot Water Flow Rate (gpm),Hot Water Volume (gal),Setpoint_WaterHeater
 1H1,1,5.93,5.93,FAUC,53.3035,1.667,0.5,0.842787136,1.404926156,125
 1H1,1,6.48,6.48,FAUC,53.3035,0.167,0.5,0.278320951,0.046479599,125
 1H1,1,7.07,7.07,FAUC,53.3035,0.167,0.5,0.253171467,0.042279635,125

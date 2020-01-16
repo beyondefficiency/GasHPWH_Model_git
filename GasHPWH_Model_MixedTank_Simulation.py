@@ -66,13 +66,9 @@ from datetime import datetime
 
 Start_Time = time.time() #begin to time the script
 
-#%%--------------------------USER INPUTS------------------------------------------
-
-
-Path_DrawProfile_Output_Base_Path = os.path.dirname(__file__) + os.sep + 'Output'
-Path_DrawProfile_Output_File_Name = 'Output_{0}.csv'.format(datetime.now().strftime("%d-%m-%Y %H:%M:%S")) #mark output by time run
-Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
-
+#%%--------------------------USER INPUTS----------------------------------------
+Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
+vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
 
 #Constants used in water-based calculations
@@ -127,72 +123,78 @@ class Inputs:
         self.label_Temperature_Tank_Set_Deadband = tk.Label(master, text="Tank Temperature Deadband Setpoint (Deg F): ")
         self.label_Temperature_Tank_Set_Deadband.grid(row=3, column=1)
         self.entry_Temperature_Tank_Set_Deadband = tk.Entry(master)
+        self.entry_Temperature_Tank_Set_Deadband.insert(0, 35)
         self.entry_Temperature_Tank_Set_Deadband.grid(row=3, column=2)
         
         self.label_Temperature_Water_Inlet = tk.Label(master, text="Inlet Water Temperature (Deg F): ")
         self.label_Temperature_Water_Inlet.grid(row=4, column=1)
         self.entry_Temperature_Water_Inlet = tk.Entry(master)
+        self.entry_Temperature_Water_Inlet.insert(0, 40)
         self.entry_Temperature_Water_Inlet.grid(row=4, column=2)
         
         self.label_Temperature_Ambient = tk.Label(master, text="Ambient Temperature (Deg F): ")
         self.label_Temperature_Ambient.grid(row=5, column=1)
         self.entry_Temperature_Ambient = tk.Entry(master)
+        self.entry_Temperature_Ambient.insert(0, 68)
         self.entry_Temperature_Ambient.grid(row=5, column=2)
         
         self.label_Volume_Tank = tk.Label(master, text="Tank Volume (gal): ")
         self.label_Volume_Tank.grid(row=6, column=1)
         self.entry_Volume_Tank = tk.Entry(master)
+        self.entry_Volume_Tank.insert(0, 73)
         self.entry_Volume_Tank.grid(row=6, column=2)
         
         self.label_Coefficient_JacketLoss = tk.Label(master, text="JacketLoss Coefficient (W/K): ")
         self.label_Coefficient_JacketLoss.grid(row=7, column=1)
         self.entry_Coefficient_JacketLoss = tk.Entry(master)
+        self.entry_Coefficient_JacketLoss.insert(0, 5.75)
         self.entry_Coefficient_JacketLoss.grid(row=7, column=2)
         
         self.label_Power_Backup = tk.Label(master, text="Backup Power (W): ")
         self.label_Power_Backup.grid(row=8, column=1)
         self.entry_Power_Backup = tk.Entry(master)
+        self.entry_Power_Backup.insert(0, 0)
         self.entry_Power_Backup.grid(row=8, column=2)
         
         self.label_Threshold_Activation_Backup = tk.Label(master, text="Backup Activation Threshold (Deg F): ")
         self.label_Threshold_Activation_Backup.grid(row=9, column=1)
         self.entry_Threshold_Activation_Backup = tk.Entry(master)
+        self.entry_Threshold_Activation_Backup.insert(0,95)
         self.entry_Threshold_Activation_Backup.grid(row=9, column=2)
         
         self.label_Threshold_Deactivation_Backup = tk.Label(master, text="Backup Deactivation Threshold (Deg F): ")
         self.label_Threshold_Deactivation_Backup.grid(row=10, column=1)
         self.entry_Threshold_Deactivation_Backup = tk.Entry(master)
+        self.entry_Threshold_Deactivation_Backup.insert(0,115)
         self.entry_Threshold_Deactivation_Backup.grid(row=10, column=2)
         
-        self.label_Coefficient_JacketLoss = tk.Label(master, text="Backup Deactivation Threshold (Deg F): ")
-        self.label_Coefficient_JacketLoss.grid(row=11, column=1)
-        self.entry_Coefficient_JacketLoss = tk.Entry(master)
-        self.entry_Coefficient_JacketLoss.grid(row=11, column=2)
-        
         self.label_FiringRate_HeatPump = tk.Label(master, text="Heat Consumed by Heat Pump/Firing rate (W): ")
-        self.label_FiringRate_HeatPump.grid(row=12, column=1)
+        self.label_FiringRate_HeatPump.grid(row=11, column=1)
         self.entry_FiringRate_HeatPump = tk.Entry(master)
         self.entry_FiringRate_HeatPump.insert(0, 2930.72)
-        self.entry_FiringRate_HeatPump.grid(row=12, column=2)
+        self.entry_FiringRate_HeatPump.grid(row=11, column=2)
         
         self.label_ElectricityConsumption_Active = tk.Label(master, text="Active Electricity Consumption (W) ")
-        self.label_ElectricityConsumption_Active.grid(row=13, column=1)
+        self.label_ElectricityConsumption_Active.grid(row=12, column=1)
         self.entry_ElectricityConsumption_Active = tk.Entry(master)
-        self.entry_ElectricityConsumption_Active.grid(row=13, column=2)
+        self.entry_ElectricityConsumption_Active.insert(0,158.5)
+        self.entry_ElectricityConsumption_Active.grid(row=12, column=2)
         
         self.label_ElectricityConsumption_Idle= tk.Label(master, text="Idle Electricity Consumption (W): ")
-        self.label_ElectricityConsumption_Idle.grid(row=14, column=1)
+        self.label_ElectricityConsumption_Idle.grid(row=13, column=1)
         self.entry_ElectricityConsumption_Idle = tk.Entry(master)
-        self.entry_ElectricityConsumption_Idle.grid(row=14, column=2)
+        self.entry_ElectricityConsumption_Idle.insert(0,5)
+        self.entry_ElectricityConsumption_Idle.grid(row=13, column=2)
         
         self.label_NOx_Output= tk.Label(master, text="NOx Output (ng/J): ")
-        self.label_NOx_Output.grid(row=15, column=1)
+        self.label_NOx_Output.grid(row=14, column=1)
         self.entry_NOx_Output = tk.Entry(master)
-        self.entry_NOx_Output.grid(row=15, column=2)
+        self.entry_NOx_Output.insert(0,10)
+        self.entry_NOx_Output.grid(row=14, column=2)
         
         
         self.button_submit=tk.Button(master, text = "Submit", command=self.on_button)
-        self.button_submit.grid(row=16, columnspan=2)
+        self.button_submit.grid(row=15, columnspan=2)
         
         
         #These inputs are a series of constants describing the conditions of the simulation. The constants describing the gas HPWH itself come from communications with Alex of GTI, and may
@@ -207,7 +209,7 @@ class Inputs:
         self.Coefficient_JacketLoss = 5.75 #W/K, based on e-mail from Alex Fridyland on 29 Mar 2019
         self.Power_Backup = 0 #W, electricity consumption of the backup resistance elements
         self.Threshold_Activation_Backup = 95 #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
-        self.Deactivation_Backup = 115 #Deg F, sets the temperature when the backup element disengages after it has been engaged
+        self.Threshold_Deactivation_Backup = 115 #Deg F, sets the temperature when the backup element disengages after it has been engaged
         self.FiringRate_HeatPump = 2930.72 #W, heat consumed by the heat pump
         self.ElectricityConsumption_Active = 158.5 #W, electricity consumed by the fan when the heat pump is running
         self.ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
@@ -253,8 +255,6 @@ FiringRate_HeatPump = inputs.FiringRate_HeatPump #W, heat consumed by the heat p
 ElectricityConsumption_Active = inputs.ElectricityConsumption_Active #W, electricity consumed by the fan when the heat pump is running
 ElectricityConsumption_Idle = inputs.ElectricityConsumption_Idle #W, electricity consumed by the HPWH when idle
 NOx_Output = inputs.NOx_Output #ng/J, NOx production of the HP when active
-print(type(NOx_Output))
-print(type(FiringRate_HeatPump))
 
 #Calculating the NOx production rate of the HPWH when HP is active
 NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
@@ -274,8 +274,8 @@ ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
 class COP_app:
     def __init__(self, master):
         self.master = master
-        self.text = tk.Label(master, text="These coefficients describe the Coefficient of Performance (COP) of the heat pump.\n\n The equation is as follows:\nCOP = COP1 * water temp + COP2\n")
-        self.text.grid(row=1, columnspan=2)
+        self.text = tk.Label(master, text="These coefficients describe the Coefficient of Performance (COP) of the heat pump.\n\n The equation is as follows:\nCOP = (COP1 x water temp) + COP2\n")
+        self.text.grid(row=1, columnspan=3)
         
         self.label_COP1 = tk.Label(master, text="Coefficient 1: ")
         self.label_COP1.grid(row=2, column=1)
@@ -287,12 +287,13 @@ class COP_app:
         self.entry_COP2 = tk.Entry(master)
         self.entry_COP2.grid(row=3, column=2)   
         
-        self.button_submit=tk.Button(master, text = "Submit", command=self.on_button)
-        self.button_submit.grid(row=4, columnspan=2)
         self.COP = np.zeros(2)
+        
+        self.button_submit=tk.Button(master, text = "Submit", command=self.on_button)
+        self.button_submit.grid(row=5, columnspan=3)
 
         self.close_button = tk.Button(master, text="Close", command=master.quit)
-        self.close_button.grid(row=5, columnspan=2)
+        self.close_button.grid(row=6, columnspan=3)
         
     def on_button(self):
         self.COP[0] = self.entry_COP1.get()
@@ -304,11 +305,11 @@ cop_app = COP_app(root)
 root.mainloop()
 
 Coefficients_COP= cop_app.COP
+#Creates a 1 dimensional regression stating the COP of the gas heat pump as a function of the temperature of water in the tank
+Regression_COP = np.poly1d(Coefficients_COP)
 
-
-=======
 #Stores the parameters describing the HPWH in a list for use in the model
->>>>>>> master
+
 Parameters = [Coefficient_JacketLoss,
                 Power_Backup,
                 Threshold_Activation_Backup,
@@ -395,13 +396,11 @@ Model['Timestep (min)'] = Timestep
 #The following code simulates the performance of the gas HPWH
 Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
 
-# Make output dir if it doesn't already exist:
-if not os.path.exists('Output'):
-    os.makedirs('Output')
-
-with CodeTimer('write to csv'):
-    Model.to_csv('Output' + os.sep + 'Numpy_Output.csv', index = False) # Path edited for executable.
 #%%--------------------------WRITE RESULTS TO FILE-----------------------------------------
+Path_DrawProfile_Output_Base_Path = 'Output'
+Path_DrawProfile_Output_File_Name = 'Output_{0}.csv'.format(datetime.now().strftime("%d-%m-%Y %H:%M:%S")) #mark output by time run
+Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
+
 Model.to_csv(Path_DrawProfile_Output, index = False) #Save the model to the declared file.
 Model.to_csv('Output\Output.csv', index = False) # Path edited for executable.
 End_Time = time.time() #begin to time the script
