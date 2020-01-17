@@ -106,18 +106,17 @@ Seconds_In_Minute = 60 #The number of seconds in a minute
 W_To_BtuPerHour = 3.412142 #Converting from Watts to Btu/hr
 K_To_F_MagnitudeOnly = 1.8/1. #Converting from K/C to F. Only applicable for magnitudes, not actual temperatures (E.g. Yes for "A temperature difference of 10 C" but not for "The water temperature is 40 C")
 
-#These inputs are a series of constants describing the conditions of the simulation. The constants describing the gas HPWH itself come from communications with Alex of GTI, and may
-#need to be updated if he sends new values
+# GUI: creates inputs window with default values
 class Inputs:
     def __init__(self, master):
         self.master = master
 
-        self.master.title('Inputs')
+        self.master.title('Inputs') # GUI window label
         
         self.label_Temperature_Tank_Initial = tk.Label(master, text="Initial Tank Temperature (Deg F): ")
         self.label_Temperature_Tank_Initial.grid(row=1, column=1)
         self.entry_Temperature_Tank_Initial = tk.Entry(master)
-        self.entry_Temperature_Tank_Initial.insert(0, 135)
+        self.entry_Temperature_Tank_Initial.insert(0, 135) # Set defualt value
         self.entry_Temperature_Tank_Initial.grid(row=1, column=2)
         
         self.label_Temperature_Tank_Set = tk.Label(master, text="Tank Temperature Setpoint (Deg F): ")
@@ -198,14 +197,13 @@ class Inputs:
         self.entry_NOx_Output.insert(0,10)
         self.entry_NOx_Output.grid(row=14, column=2)
         
-        
         self.button_submit=tk.Button(master, text = "Submit", command=self.submit_inputs)
-        self.button_submit.grid(row=15, columnspan=2)
+        self.button_submit.grid(row=15, column=2)
         
         
         #These inputs are a series of constants describing the conditions of the simulation. The constants describing the gas HPWH itself come from communications with Alex of GTI, and may
         #need to be updated if he sends new values
-        # Set initial values
+        # Set gas HPWH constant values
         self.Temperature_Tank_Initial = 135 #Deg F, initial temperature of water in the storage tank
         self.Temperature_Tank_Set = 135 #Deg F, set temperature of the HPWH
         self.Temperature_Tank_Set_Deadband = 35 #Deg F, deadband on the thermostat
@@ -222,11 +220,8 @@ class Inputs:
         self.NOx_Output = 10 #ng/J, NOx production of the HP when active
 
         self.close_button = tk.Button(master, text="Next", command=master.quit)
-        self.close_button.grid(row=17, columnspan=2)
-#        
-#    def close(self):
-#        self.master.destroy()
-        
+        self.close_button.grid(row=17, column=2)
+
     def submit_inputs(self):
         self.Temperature_Tank_Initial = int(self.entry_Temperature_Tank_Initial.get())
         self.Temperature_Tank_Set = int(self.entry_Temperature_Tank_Set.get())
@@ -284,31 +279,32 @@ class COP_app:
         
         self.master.title('Coefficient of Performance')
         
-        self.text = tk.Label(master, text="These coefficients describe the Coefficient of Performance (COP) of the heat pump.\n\n The equation is as follows:\nCOP = (COP1 x water temp) + COP2\n")
-        self.text.grid(row=1, columnspan=3)
+        self.text = tk.Label(master, text="These coefficients, C1 and C2, describe the Coefficient of Performance (COP) of the heat pump.\n\n  \
+                                             The equation is as follows:\nCOP = (C1 x water temp) + C2\n")
+        self.text.grid(row=1, columnspan=4)
         
-        self.label_COP1 = tk.Label(master, text="COP1: ")
-        self.label_COP1.grid(row=2, column=1)
-        self.entry_COP1 = tk.Entry(master)
-        self.entry_COP1.grid(row=2, column=2)
+        self.label_C1 = tk.Label(master, text="C1: ")
+        self.label_C1.grid(row=2, column=1)
+        self.entry_C1 = tk.Entry(master)
+        self.entry_C1.grid(row=2, column=2)
         
-        self.label_COP2 = tk.Label(master, text="COP2: ")
-        self.label_COP2.grid(row=3, column=1)
-        self.entry_COP2 = tk.Entry(master)
-        self.entry_COP2.grid(row=3, column=2)   
+        self.label_C2 = tk.Label(master, text="C2: ")
+        self.label_C2.grid(row=3, column=1)
+        self.entry_C2 = tk.Entry(master)
+        self.entry_C2.grid(row=3, column=2)   
         
         self.COP = np.zeros(2)
         
         self.button_submit=tk.Button(master, text = "Submit", command=self.submit_COP)
-        self.button_submit.grid(row=5, columnspan=3)
+        self.button_submit.grid(row=5, columnspan=4)
 
         self.close_button = tk.Button(master, text="Close", command=master.quit)
-        self.close_button.grid(row=6, columnspan=3)
+        self.close_button.grid(row=6, columnspan=4)
         
         
     def submit_COP(self):
-        self.COP[0] = self.entry_COP1.get()
-        self.COP[1] = self.entry_COP2.get()
+        self.COP[0] = self.entry_C1.get()
+        self.COP[1] = self.entry_C2.get()
      
 root_COP = tk.Tk()
 cop_app = COP_app(root_COP)
@@ -332,6 +328,7 @@ Parameters = [Coefficient_JacketLoss,
                 ElectricityConsumption_Idle,
                 NOx_Production_Rate]
 
+#Close inputs and COP windows
 root_COP.destroy()
 root_inputs.destroy()
 # with CodeTimer('CFA = {0}, Climate Zone = {1}'.format(FloorArea_Conditioned, ClimateZone)): #for testing - indent below code if using
