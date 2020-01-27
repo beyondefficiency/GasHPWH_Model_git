@@ -111,24 +111,24 @@ class Inputs:
     def __init__(self, master):
         self.master = master
 
-        self.master.title('Inputs') # GUI window label
+        self.master.title('Gas HPWH Inputs') # GUI window label
         
         self.label_Temperature_Tank_Initial = tk.Label(master, text="Initial Tank Temperature (Deg F): ")
         self.label_Temperature_Tank_Initial.grid(row=1, column=1)
         self.entry_Temperature_Tank_Initial = tk.Entry(master)
-        self.entry_Temperature_Tank_Initial.insert(0, 135) # Set defualt value
+        self.entry_Temperature_Tank_Initial.insert(0, 115) # Set defualt value
         self.entry_Temperature_Tank_Initial.grid(row=1, column=2)
         
         self.label_Temperature_Tank_Set = tk.Label(master, text="Tank Temperature Setpoint (Deg F): ")
         self.label_Temperature_Tank_Set.grid(row=2, column=1)
         self.entry_Temperature_Tank_Set = tk.Entry(master)
-        self.entry_Temperature_Tank_Set.insert(0, 135)
+        self.entry_Temperature_Tank_Set.insert(0, 115)
         self.entry_Temperature_Tank_Set.grid(row=2, column=2)
         
         self.label_Temperature_Tank_Set_Deadband = tk.Label(master, text="Tank Temperature Deadband Setpoint (Deg F): ")
         self.label_Temperature_Tank_Set_Deadband.grid(row=3, column=1)
         self.entry_Temperature_Tank_Set_Deadband = tk.Entry(master)
-        self.entry_Temperature_Tank_Set_Deadband.insert(0, 35)
+        self.entry_Temperature_Tank_Set_Deadband.insert(0, 15)
         self.entry_Temperature_Tank_Set_Deadband.grid(row=3, column=2)
         
         self.label_Temperature_Water_Inlet = tk.Label(master, text="Inlet Water Temperature (Deg F): ")
@@ -146,19 +146,19 @@ class Inputs:
         self.label_Volume_Tank = tk.Label(master, text="Tank Volume (gal): ")
         self.label_Volume_Tank.grid(row=6, column=1)
         self.entry_Volume_Tank = tk.Entry(master)
-        self.entry_Volume_Tank.insert(0, 73)
+        self.entry_Volume_Tank.insert(0, 65)
         self.entry_Volume_Tank.grid(row=6, column=2)
         
         self.label_Coefficient_JacketLoss = tk.Label(master, text="JacketLoss Coefficient (W/K): ")
         self.label_Coefficient_JacketLoss.grid(row=7, column=1)
         self.entry_Coefficient_JacketLoss = tk.Entry(master)
-        self.entry_Coefficient_JacketLoss.insert(0, 5.75)
+        self.entry_Coefficient_JacketLoss.insert(0, 2.638)
         self.entry_Coefficient_JacketLoss.grid(row=7, column=2)
         
         self.label_Power_Backup = tk.Label(master, text="Backup Power (W): ")
         self.label_Power_Backup.grid(row=8, column=1)
         self.entry_Power_Backup = tk.Entry(master)
-        self.entry_Power_Backup.insert(0, 0)
+        self.entry_Power_Backup.insert(0, 1250)
         self.entry_Power_Backup.grid(row=8, column=2)
         
         self.label_Threshold_Activation_Backup = tk.Label(master, text="Backup Activation Threshold (Deg F): ")
@@ -170,7 +170,7 @@ class Inputs:
         self.label_Threshold_Deactivation_Backup = tk.Label(master, text="Backup Deactivation Threshold (Deg F): ")
         self.label_Threshold_Deactivation_Backup.grid(row=10, column=1)
         self.entry_Threshold_Deactivation_Backup = tk.Entry(master)
-        self.entry_Threshold_Deactivation_Backup.insert(0,115)
+        self.entry_Threshold_Deactivation_Backup.insert(0,105)
         self.entry_Threshold_Deactivation_Backup.grid(row=10, column=2)
         
         self.label_FiringRate_HeatPump = tk.Label(master, text="Heat Consumed by Heat Pump/Firing rate (W): ")
@@ -182,7 +182,7 @@ class Inputs:
         self.label_ElectricityConsumption_Active = tk.Label(master, text="Active Electricity Consumption (W) ")
         self.label_ElectricityConsumption_Active.grid(row=12, column=1)
         self.entry_ElectricityConsumption_Active = tk.Entry(master)
-        self.entry_ElectricityConsumption_Active.insert(0,158.5)
+        self.entry_ElectricityConsumption_Active.insert(0,110)
         self.entry_ElectricityConsumption_Active.grid(row=12, column=2)
         
         self.label_ElectricityConsumption_Idle= tk.Label(master, text="Idle Electricity Consumption (W): ")
@@ -279,18 +279,19 @@ class COP_app:
         
         self.master.title('Coefficient of Performance')
         
-        self.text = tk.Label(master, text="These coefficients, C1 and C2, describe the Coefficient of Performance (COP) of the heat pump.\n\n  \
-                                             The equation is as follows:\nCOP = (C1 x water temp) + C2\n")
+        self.text = tk.Label(master, text="These coefficients, C1 and C2, describe the Coefficient of Performance (COP) of the heat pump.\n\nThe equation is as follows:\nCOP = (C1 x water temp) + C2\n")
         self.text.grid(row=1, columnspan=4)
         
         self.label_C1 = tk.Label(master, text="C1: ")
         self.label_C1.grid(row=2, column=1)
         self.entry_C1 = tk.Entry(master)
+        self.entry_C1.insert(0,-0.0025)
         self.entry_C1.grid(row=2, column=2)
         
         self.label_C2 = tk.Label(master, text="C2: ")
         self.label_C2.grid(row=3, column=1)
         self.entry_C2 = tk.Entry(master)
+        self.entry_C2.insert(0,2.0341)
         self.entry_C2.grid(row=3, column=2)   
         
         self.COP = np.zeros(2)
@@ -298,7 +299,7 @@ class COP_app:
         self.button_submit=tk.Button(master, text = "Submit", command=self.submit_COP)
         self.button_submit.grid(row=5, columnspan=4)
 
-        self.close_button = tk.Button(master, text="Close", command=master.quit)
+        self.close_button = tk.Button(master, text="Run Simulation", command=master.quit)
         self.close_button.grid(row=6, columnspan=4)
         
         
