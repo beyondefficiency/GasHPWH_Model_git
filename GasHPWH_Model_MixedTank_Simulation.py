@@ -71,28 +71,31 @@ Coefficients_COP = np.fromfile(os.path.dirname(__file__) + os.sep + 'Coefficient
 #Creates a 1 dimensional regression stating the COP of the gas heat pump as a function of the temperature of water in the tank
 Regression_COP = np.poly1d(Coefficients_COP)
 
+#Bldg=Single_CZ=1_Wat=Hot_Prof=1_SDLM=Yes_CFA=800_Inc=['F', 'S', 'C', 'D', 'B']_Ver=2019.csv
 WeatherSource = 'CA' #Type of weather file to use in the simulation. Currently only supports CA
 Water = 'Hot' #specify hot or mixed profile
 Temperature_Supply_WaterHeater = 125 #Supply temperature of the water heater, in deg F
 Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
 SDLM = 'Yes' #'Yes or No' dependig on what using
 Building_Type = 'Single' #Single or Multi depending on what using
-Bedrooms = 5 #Number of bedrooms used in the simulation
-FloorArea_Conditioned = 3500 #Conditioned floor area of the dwelling used in the simulation
-ClimateZone = 5 #CA climate zone to use in the simulation
+Bedrooms = 1 #Number of bedrooms used in the simulation
+FloorArea_Conditioned = 800 #Conditioned floor area of the dwelling used in the simulation
+ClimateZone = 1 #CA climate zone to use in the simulation
 Include_Code = "['F', 'S', 'C', 'D', 'B']"
 Version = 2019
 
 vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
 
 #there are two available base paths to use in the next two lines. uncomment the format you want and use it
-Path_DrawProfile_Base_Path = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'Draw_Profiles' + os.sep
+# Path_DrawProfile_Base_Path = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'Draw_Profiles' + os.sep
+
+Path_DrawProfile_Base_Path = '/Users/nathanieliltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Draw Profiles'
 Path_DrawProfile_File_Name = 'Bldg={0}_CZ={1}_Wat={2}_Prof={3}_SDLM={4}_CFA={5}_Inc={6}_Ver={7}.csv'.format(str(Building_Type),str(ClimateZone),str(Water),str(Bedrooms),str(SDLM),str(FloorArea_Conditioned),str(Include_Code),str(Version))
 Path_DrawProfile = Path_DrawProfile_Base_Path + os.sep + Path_DrawProfile_File_Name
-# Path_DrawProfile_Base_Path = '/Users/nathanieliltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Draw Profiles'
+
 # Path_DrawProfile_Base_Output_Path = '/Users/nathanieliltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Individual Outputs of Simulation Model'
 Path_DrawProfile_Output_Base_Path = os.path.dirname(__file__) + os.sep + 'Output'
-Path_DrawProfile_Output_File_Name = 'Output_{0}.csv'.format(datetime.now().strftime("%d%m%Y%H%M%S")) #mark output by time run
+Path_DrawProfile_Output_File_Name = 'Output_Nathan_NoModel{0}.csv'.format(datetime.now().strftime("%d%m%Y%H%M%S")) #mark output by time run
 Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
@@ -221,7 +224,7 @@ Model['Total Energy Change (Btu)'] = 0
 Model['Timestep (min)'] = Timestep
 
 #The following code simulates the performance of the gas HPWH
-Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
+# Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
 
 #%%--------------------------WRITE RESULTS TO FILE-----------------------------------------
 # with CodeTimer('write to csv'): #for testing
@@ -229,4 +232,4 @@ Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
 Model.to_csv(Path_DrawProfile_Output, index = False) #Save the model to the declared file.
 
 End_Time = time.time() #begin to time the script
-print('script ran in {0} seconds'.format((End_Time - Start_Time)/1000))
+print('script ran in {0} seconds'.format((End_Time - Start_Time)))
