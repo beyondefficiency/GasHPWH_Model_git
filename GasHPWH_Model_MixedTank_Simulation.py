@@ -113,6 +113,21 @@ K_To_F_MagnitudeOnly = 1.8/1. #Converting from K/C to F. Only applicable for mag
 
 #These inputs are a series of constants describing the conditions of the simulation. The constants describing the gas HPWH itself come from communications with Alex of GTI, and may
 #need to be updated if he sends new values
+# Temperature_Tank_Initial = 115 #Deg F, initial temperature of water in the storage tank. 115 F is the standard set temperature in CBECC
+# Temperature_Tank_Set = 115 #Deg F, set temperature of the HPWH. 115 F is the standard set temperature in CBECC
+# Temperature_Tank_Set_Deadband = 15 #Deg F, deadband on the thermostat based on e-mail from Paul Glanville on Oct 31, 2019
+# Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation
+# Temperature_Ambient = 68 #deg F, temperature of the ambient air, placeholder for now
+# Volume_Tank = 65 #gal, volume of water held in the storage tank
+# Coefficient_JacketLoss = 2.638 #W/K, Default value from Paul Glanville on Oct 31, 2019
+# Power_Backup = 1250 #W, electricity consumption of the backup resistance elements
+# Threshold_Activation_Backup = 95 #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
+# Threshold_Deactivation_Backup = 105 #Deg F, sets the temperature when the backup element disengages after it has been engaged
+# FiringRate_HeatPump = 2930.72 #W, heat consumed by the heat pump
+# ElectricityConsumption_Active = 110 #W, electricity consumed by the fan when the heat pump is running
+# ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
+# NOx_Output = 10 #ng/J, NOx production of the HP when active
+
 Temperature_Tank_Initial = 135 #Deg F, initial temperature of water in the storage tank
 Temperature_Tank_Set = 135 #Deg F, set temperature of the HPWH
 Temperature_Tank_Set_Deadband = 35 #Deg F, deadband on the thermostat
