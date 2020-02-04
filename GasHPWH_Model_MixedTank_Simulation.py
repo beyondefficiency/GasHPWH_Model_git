@@ -95,7 +95,7 @@ Path_DrawProfile = Path_DrawProfile_Base_Path + os.sep + Path_DrawProfile_File_N
 
 # Path_DrawProfile_Base_Output_Path = '/Users/nathanieliltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Individual Outputs of Simulation Model'
 Path_DrawProfile_Output_Base_Path = os.path.dirname(__file__) + os.sep + 'Output'
-Path_DrawProfile_Output_File_Name = 'Output_Nathan_NoModel{0}.csv'.format(datetime.now().strftime("%d%m%Y%H%M%S")) #mark output by time run
+Path_DrawProfile_Output_File_Name = 'Output_Nathan_WithModel{0}.csv'.format(datetime.now().strftime("%d%m%Y%H%M%S")) #mark output by time run
 Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
@@ -156,21 +156,21 @@ Parameters = [Coefficient_JacketLoss,
 
 #%%--------------------------MODELING-----------------------------------------
 
-#A dataframe is created, based on the draw profile, in which to run the subsequent simulation
+#A dataframe is created, based on the draw profile, on which to run the subsequent simulation
 #The first step is putting the draw profile data into the right format (E.g. If it's CBECC data, we need to convert from event-based to timestep-based)
 
-#hot water draw event. This code creates a dataframe with 1 minute timesteps and converts the CBECC-Res draw profiles into that
-#format
+#hot water draw event. This code creates a temporally continuous dataframe using
+#the specified timesteps and converts the CBECC-Res draw profile provided into that format
 # with CodeTimer('read from csv'): #for testing - make sure to indent if using
 Draw_Profile = pd.read_csv(Path_DrawProfile) #Create a data frame called Draw_Profile containing the CBECC-Res information
-# with CodeTimer('initial manipulations'): #for testing - make sure to indent if using
+# with CodeTimer('initial manipulations'): #for testing - make sure to indent below if using
 Draw_Profile['Day of Year (Day)'] = Draw_Profile['Day of Year (Day)'].astype(int) #make sure the days are in integer format, not float, as a sanity check on work below
 Unique_Days = Draw_Profile['Day of Year (Day)'].unique() #Identifies the number of unique days included in the draw profile
-Continuous_Index_Range_of_Days = range(Draw_Profile['Day of Year (Day)'].min(), Draw_Profile['Day of Year (Day)'].max() + 1)
+Continuous_Index_Range_of_Days = range(Draw_Profile['Day of Year (Day)'].min(), Draw_Profile['Day of Year (Day)'].max() + 1) #outlines the full time coveraeofthe data (full days)
 Missing_Days = [x for x in range(Draw_Profile['Day of Year (Day)'].min(), Draw_Profile['Day of Year (Day)'].max() + 1) if x not in Unique_Days] #identifies the specific days missing
-Length_Index_Model= int(len(Continuous_Index_Range_of_Days) * Hours_In_Day * Minutes_In_Hour / Timestep) #Identifies the number of minutes included in the draw profile
-Model = pd.DataFrame(index = range(Length_Index_Model)) #Creates a data frame with 1 row for each minute in the draw profile (A model with a 1 minute timestamp)
-Model['Time (min)'] = (Model.index + 1) * Timestep #Create a column in the data frame representing the simulation time
+Index_Model= int(len(Continuous_Index_Range_of_Days) * Hours_In_Day * Minutes_In_Hour / Timestep) #Identifies the number of intervals included in the model
+Model = pd.DataFrame(index = range(Index_Model)) #Creates a data frame with 1 row for each interval in the draw profile
+Model['Time (min)'] = (Model.index) * Timestep #Create a column in the data frame representing the simulation time. intervals are specified by thier start time
 Model['Hot Water Draw Volume (gal)'] = 0 #Set the default data for hot water draw volume in each time step to 0. This value will later be edited as specific flow volumes for each time step are calculated
 Model['Inlet Water Temperature (deg F)'] = 0 #initialize the inlet temperature column
 First_Day = Draw_Profile.loc[0, 'Day of Year (Day)'] #Identifies the day (In integer relative to 365 form, not date form) of the first day of the draw profile
@@ -181,11 +181,12 @@ Draw_Profile['End Time of Profile (min)'] = Draw_Profile['Start time (hr)'] * Mi
 for i in Draw_Profile.index: #Iterates through each draw in Draw_Profile
     Start = Draw_Profile.loc[i, 'Start Time of Profile (min)'] #Reads the time when the draw starts
     End = Draw_Profile.loc[i, 'End Time of Profile (min)'] #Reads the time when the draw ends
-    Bin_Start = int(np.floor(Start/Timestep) - 1) #Calculates the bin when the draw starts
-    Number_Bins = int(np.ceil((End-Start)/Timestep)) #Identifies the number of timesteps over which the current draw is performed. E.g. A 10 minute hot water draw starting at 12:02:30 in a profile with 1 minute timeseps would occupy 11 bins (The second half of 12:02, 12:03, 12:04, ..., 12:11, the first half of 12:12)
-    Bin_End = Bin_Start + Number_Bins - 1
     Flow_Rate = Draw_Profile.loc[i, 'Hot Water Flow Rate (gpm)'] #Reads the hot water flow rate of the draw and stores it in the variable Flow_Rate
     Duration = Draw_Profile.loc[i, 'Duration (min)'] #Reads the duration of the draw and stores it in the variable Duration
+
+    Bin_Start = int(np.floor(Start/Timestep) - 1) #Calculates the bin number when the draw starts
+    Number_Bins = int(np.ceil((Duration)/Timestep)) #Identifies the number of timesteps over which the current draw is performed. E.g. A 10 minute hot water draw starting at 12:02:30 in a profile with 1 minute timeseps would occupy 11 bins (The second half of 12:02, 12:03, 12:04, ..., 12:11, the first half of 12:12)
+    Bin_End = Bin_Start + Number_Bins - 1
 
     if Number_Bins == 1: #If the draw only happens during a single timestep
         Model.loc[Bin_Start, 'Hot Water Draw Volume (gal)'] += Flow_Rate * Duration #Add the entire volume of the draw to that timestep
@@ -211,17 +212,17 @@ Model['Ambient Temperature (deg F)'] = Temperature_Ambient #Sets the ambient tem
 # Numpy_Model_This = Model.copy() #for testing
 
 #Initializes a bunch of values at either 0 or initial temperature. They will be overwritten later as needed
-Model['Tank Temperature (deg F)'] = 0
-Model.loc[0, 'Tank Temperature (deg F)'] = Temperature_Tank_Initial
-Model.loc[1, 'Tank Temperature (deg F)'] = Temperature_Tank_Initial
-Model['Jacket Losses (Btu)'] = 0
-Model['Energy Withdrawn (Btu)'] = 0
-Model['Energy Added Backup (Btu)'] = 0
-Model['Energy Added Heat Pump (Btu)'] = 0
-Model['Energy Added Total (Btu)'] = 0
-Model['COP Gas'] = 0
-Model['Total Energy Change (Btu)'] = 0
-Model['Timestep (min)'] = Timestep
+# Model['Tank Temperature (deg F)'] = 0
+# Model.loc[0, 'Tank Temperature (deg F)'] = Temperature_Tank_Initial
+# Model.loc[1, 'Tank Temperature (deg F)'] = Temperature_Tank_Initial
+# Model['Jacket Losses (Btu)'] = 0
+# Model['Energy Withdrawn (Btu)'] = 0
+# Model['Energy Added Backup (Btu)'] = 0
+# Model['Energy Added Heat Pump (Btu)'] = 0
+# Model['Energy Added Total (Btu)'] = 0
+# Model['COP Gas'] = 0
+# Model['Total Energy Change (Btu)'] = 0
+# Model['Timestep (min)'] = Timestep
 
 #The following code simulates the performance of the gas HPWH
 # Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
