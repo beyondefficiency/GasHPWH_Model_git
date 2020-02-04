@@ -95,7 +95,11 @@ Path_DrawProfile = Path_DrawProfile_Base_Path + os.sep + Path_DrawProfile_File_N
 
 # Path_DrawProfile_Base_Output_Path = '/Users/nathanieliltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Individual Outputs of Simulation Model'
 Path_DrawProfile_Output_Base_Path = os.path.dirname(__file__) + os.sep + 'Output'
+<<<<<<< HEAD
 Path_DrawProfile_Output_File_Name = 'Output_Model_{0}.csv'.format(datetime.now().strftime("%d_%m_%Y_%H_%M")) #mark output by time run
+=======
+Path_DrawProfile_Output_File_Name = 'Output_Nathan_WithModel{0}.csv'.format(datetime.now().strftime("%d%m%Y%H%M%S")) #mark output by time run
+>>>>>>> 3a03706fc1426013fe1e127729c7a504a126a1ca
 Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
@@ -154,20 +158,23 @@ Parameters = [Coefficient_JacketLoss,
 
 #%%--------------------------MODELING-----------------------------------------
 
+
 #A dataframe is created, based on the draw profile, in which to run the subsequent simulation
 #The first step is putting the draw profile data into the right format (E.g. If it's CBECC data,
 # we need to convert from event-based to timestep-based)
 
 Draw_Profile = pd.read_csv(Path_DrawProfile) #Create a data frame called Draw_Profile containing the CBECC-Res information
+
 Draw_Profile['Day of Year (Day)'] = Draw_Profile['Day of Year (Day)'].astype(int) #make sure the days are in integer format, not float, as a sanity check on work below
 Unique_Days = Draw_Profile['Day of Year (Day)'].unique() #Identifies the number of unique days included in the draw profile
-Continuous_Index_Range_of_Days = range(Draw_Profile['Day of Year (Day)'].min(), Draw_Profile['Day of Year (Day)'].max() + 1)
+Continuous_Index_Range_of_Days = range(Draw_Profile['Day of Year (Day)'].min(), Draw_Profile['Day of Year (Day)'].max() + 1) #outlines the full time coveraeofthe data (full days)
 Missing_Days = [x for x in range(Draw_Profile['Day of Year (Day)'].min(), Draw_Profile['Day of Year (Day)'].max() + 1) if x not in Unique_Days] #identifies the specific days missing
 
 #This code creates a dataframe covering the full continuous range of draw profiles with whatever timesteps are specified and converts the CBECC-Res draw profiles into that format
 Index_Model= int(len(Continuous_Index_Range_of_Days) * Hours_In_Day * Minutes_In_Hour / Timestep) #Identifies the number of timestep bins covered in the draw profile
 Model = pd.DataFrame(index = range(Index_Model)) #Creates a data frame with 1 row for each bin in the draw profile
 Model['Time (min)'] = Model.index * Timestep #Create a column in the data frame giving the time at the beginning of each timestep bin
+
 Model['Hot Water Draw Volume (gal)'] = 0 #Set the default data for hot water draw volume in each time step to 0. This value will later be edited as specific flow volumes for each time step are calculated
 Model['Inlet Water Temperature (deg F)'] = 0 #initialize the inlet temperature column with all 0's, to be filled in below
 First_Day = Draw_Profile.loc[0, 'Day of Year (Day)'] #Identifies the day (In integer relative to 365 form, not date form) of the first day of the draw profile
@@ -217,7 +224,7 @@ else: #(vary_inlet_temp == False)
 
 Model['Ambient Temperature (deg F)'] = Temperature_Ambient #Sets the ambient temperature in the model equal to the value specified in INPUTS. This value could be replaced with a series of values
 
-#Initializes a bunch of values at either 0 or initial temperature. They will be overwritten later as needed
+# Initializes a bunch of values at either 0 or initial temperature. They will be overwritten later as needed
 Model['Tank Temperature (deg F)'] = 0
 Model.loc[0, 'Tank Temperature (deg F)'] = Temperature_Tank_Initial
 Model.loc[1, 'Tank Temperature (deg F)'] = Temperature_Tank_Initial
