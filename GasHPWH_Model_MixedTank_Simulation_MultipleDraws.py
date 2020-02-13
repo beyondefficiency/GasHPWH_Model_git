@@ -81,13 +81,10 @@ FiringRate_HeatPump = 2930.72 #W, heat consumed by the heat pump
 ElectricityConsumption_Active = 110 #W, electricity consumed by the fan when the heat pump is running
 ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
 NOx_Output = 10 #ng/J, NOx production of the HP when active
+Coefficient_COP = -0.0025 #The coefficient in the COP equation
+Constant_COP = 2.0341 #The constant in the COP equation
 
 #%%--------------------------USER INPUTS------------------------------------------
-
-#Reading in the coefficients describing the COP of the gas HPWH as a function of the temperature of the water in the tank
-Coefficients_COP = np.fromfile(os.path.dirname(__file__) + os.sep + 'Coefficients' + os.sep + 'COP_Function_TReturn_F_6Nov2019.csv')
-#Creates a 1 dimensional regression stating the COP of the gas heat pump as a function of the temperature of water in the tank
-Regression_COP = np.poly1d(Coefficients_COP)
 
 #Draw profile description
 Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
@@ -108,6 +105,10 @@ runs_limit = None # enter None if no limit...if you would like to limit the numb
 vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
+#COP regression calculations
+Coefficients_COP = [Coefficient_COP, Constant_COP] #combines the coefficient and the constant into an array
+Regression_COP = np.poly1d(Coefficients_COP) #Creates a 1-d linear regression stating the COP of the heat pump as a function of the temperature of water in the tank
+
 #Constants used in water-based calculations
 SpecificHeat_Water = 0.998 #Btu/(lb_m-F) @ 80 deg F, http://www.engineeringtoolbox.com/water-properties-d_1508.html
 Density_Water = 8.3176 #lb-m/gal @ 80 deg F, http://www.engineeringtoolbox.com/water-density-specific-weight-d_595.html
