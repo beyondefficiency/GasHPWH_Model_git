@@ -63,6 +63,25 @@ from linetimer import CodeTimer
 
 Start_Time = time.time() #begin to time the script
 
+#%%-------------------------GAS HPWH PARAMETERS-----------------------------------
+
+# #These inputs are a series of constants describing the conditions of the simulation. The constants describing the gas HPWH itself come from communications with Alex of GTI, and may
+# #need to be updated if he sends new values
+Temperature_Tank_Initial = 115 #Deg F, initial temperature of water in the storage tank. 115 F is the standard set temperature in CBECC
+Temperature_Tank_Set = 115 #Deg F, set temperature of the HPWH. 115 F is the standard set temperature in CBECC
+Temperature_Tank_Set_Deadband = 15 #Deg F, deadband on the thermostat based on e-mail from Paul Glanville on Oct 31, 2019
+Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation
+Temperature_Ambient = 68 #deg F, temperature of the ambient air, placeholder for now
+Volume_Tank = 65 #gal, volume of water held in the storage tank
+Coefficient_JacketLoss = 2.638 #W/K, Default value from Paul Glanville on Oct 31, 2019
+Power_Backup = 1250 #W, electricity consumption of the backup resistance elements
+Threshold_Activation_Backup = 95 #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
+Threshold_Deactivation_Backup = 105 #Deg F, sets the temperature when the backup element disengages after it has been engaged
+FiringRate_HeatPump = 2930.72 #W, heat consumed by the heat pump
+ElectricityConsumption_Active = 110 #W, electricity consumed by the fan when the heat pump is running
+ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
+NOx_Output = 10 #ng/J, NOx production of the HP when active
+
 #%%--------------------------USER INPUTS------------------------------------------
 
 #Reading in the coefficients describing the COP of the gas HPWH as a function of the temperature of the water in the tank
@@ -70,7 +89,7 @@ Coefficients_COP = np.fromfile(os.path.dirname(__file__) + os.sep + 'Coefficient
 #Creates a 1 dimensional regression stating the COP of the gas heat pump as a function of the temperature of water in the tank
 Regression_COP = np.poly1d(Coefficients_COP)
 
-Temperature_Supply_WaterHeater = 125 #Supply temperature of the water heater, in deg F
+#Draw profile description
 Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
 Version = 2019 #States the version of the T24 draw profile data set to use. Currently available options are 2016 and 2019
 WeatherSource = 'CA' #Type of weather file to use in the simulation. Currently only supports CA
@@ -100,38 +119,7 @@ Seconds_In_Minute = 60 #The number of seconds in a minute
 W_To_BtuPerHour = 3.412142 #Converting from Watts to Btu/hr
 K_To_F_MagnitudeOnly = 1.8/1. #Converting from K/C to F. Only applicable for magnitudes, not actual temperatures (E.g. Yes for "A temperature difference of 10 C" but not for "The water temperature is 40 C")
 
-# #These inputs are a series of constants describing the conditions of the simulation. The constants describing the gas HPWH itself come from communications with Alex of GTI, and may
-# #need to be updated if he sends new values
-Temperature_Tank_Initial = 115 #Deg F, initial temperature of water in the storage tank. 115 F is the standard set temperature in CBECC
-Temperature_Tank_Set = 115 #Deg F, set temperature of the HPWH. 115 F is the standard set temperature in CBECC
-Temperature_Tank_Set_Deadband = 15 #Deg F, deadband on the thermostat based on e-mail from Paul Glanville on Oct 31, 2019
-Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation
-Temperature_Ambient = 68 #deg F, temperature of the ambient air, placeholder for now
-Volume_Tank = 65 #gal, volume of water held in the storage tank
-Coefficient_JacketLoss = 2.638 #W/K, Default value from Paul Glanville on Oct 31, 2019
-Power_Backup = 1250 #W, electricity consumption of the backup resistance elements
-Threshold_Activation_Backup = 95 #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
-Threshold_Deactivation_Backup = 105 #Deg F, sets the temperature when the backup element disengages after it has been engaged
-FiringRate_HeatPump = 2930.72 #W, heat consumed by the heat pump
-ElectricityConsumption_Active = 110 #W, electricity consumed by the fan when the heat pump is running
-ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
-NOx_Output = 10 #ng/J, NOx production of the HP when active
 
-## inputs from first run
-# Temperature_Tank_Initial = 135 #Deg F, initial temperature of water in the storage tank
-# Temperature_Tank_Set = 135 #Deg F, set temperature of the HPWH
-# Temperature_Tank_Set_Deadband = 35 #Deg F, deadband on the thermostat
-# Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation
-# Temperature_Ambient = 68 #deg F, temperature of the ambient air, placeholder for now
-# Volume_Tank = 73 #gal, volume of water held in the storage tank
-# Coefficient_JacketLoss = 5.75 #W/K, based on e-mail from Alex Fridyland on 29 Mar 2019
-# Power_Backup = 0 #W, electricity consumption of the backup resistance elements
-# Threshold_Activation_Backup = 95 #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
-# Threshold_Deactivation_Backup = 1t15 #Deg F, sets the temperature when the backup element disengages after it has been engaged
-# FiringRate_HeatPump = 2930.72 #W, heat consumed by the heat pump
-# ElectricityConsumption_Active = 158.5 #W, electricity consumed by the fan when the heat pump is running
-# ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
-# NOx_Output = 10 #ng/J, NOx production of the HP when active
 
 #Calculating the NOx production rate of the HPWH when HP is active
 NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute

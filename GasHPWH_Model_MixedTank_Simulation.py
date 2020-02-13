@@ -94,7 +94,6 @@ Regression_COP = np.poly1d(Coefficients_COP)
 # Bldg=Single_CZ=1_Wat=Hot_Prof=1_SDLM=Yes_CFA=800_Inc=['F', 'S', 'C', 'D', 'B']_Ver=2019.csv
 WeatherSource = 'CA' #Type of weather file to use in the simulation. Currently only supports CA
 Water = 'Hot' #specify hot or mixed profile
-Temperature_Supply_WaterHeater = 125 #Supply temperature of the water heater, in deg F
 Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
 SDLM = 'Yes' #'Yes or No' dependig on what using
 Building_Type = 'Single' #Single or Multi depending on what using
