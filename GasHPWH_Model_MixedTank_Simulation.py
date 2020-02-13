@@ -100,7 +100,7 @@ Building_Type = 'Single' #Single or Multi depending on what using
 Bedrooms = 1 #Number of bedrooms used in the simulation
 FloorArea_Conditioned = 800 #Conditioned floor area of the dwelling used in the simulation
 ClimateZone = 1 #CA climate zone to use in the simulation
-Include_Code = "['F', 'S', 'C', 'D', 'B']"
+Include_Code = "[FSCDB]"
 Version = 2019
 
 vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
