@@ -94,12 +94,14 @@ Water = 'Hot' #specify hot or mixed profile
 SDLM = 'Yes' #'Yes or No' dependig on what using
 Building_Type = 'Single' #Single or Multi depending on what using
 #there are two available base paths to use in the next two lines. uncomment the format you want and use it
-# Path_DrawProfile_Base_Path = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'Draw_Profiles' + os.sep
-Path_DrawProfile_Base_Path = '/Users/nathaniltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Draw Profiles'
-Path_DrawProfile_Base_Output_Path = '/Users/nathaniltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Individual Outputs of Simulation Model'
-Path_Summary_Output = '/Users/nathaniltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs'
-Name_kWh_Summary_File = 'kWh_Usage_Summary_3.csv'
-Name_Therm_Summary_File = 'Therms_Usage_Summary_3.csv'
+Path_DrawProfile_Base_Path = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'Draw_Profiles'
+# Path_DrawProfile_Base_Path = '/Users/nathaniltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Draw Profiles'
+Path_DrawProfile_Base_Output_Path = os.path.dirname(__file__) + os.sep + 'Output'
+output_prefix = 'OUTPUT_' #this will be appended to the beginning of each file run when saving the final individual results
+# Path_DrawProfile_Base_Output_Path = '/Users/nathaniltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Individual Outputs of Simulation Model'
+Path_Summary_Output = os.path.dirname(__file__) + os.sep + 'Output'
+Name_kWh_Summary_File = 'kWh_Usage_Summary_3.csv' #this file summarizes all the different profiles run
+Name_Therm_Summary_File = 'Therms_Usage_Summary_3.csv'  #this file summarizes all the different profiles run
 
 runs_limit = None # enter None if no limit...if you would like to limit the number of draw profiles the script runs (maybe for testing of the script so it doesnt take to long - enter that here)
 vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
@@ -284,7 +286,7 @@ for current_profile in All_Variable_Dicts:
         #%%--------------------------WRITE RESULTS TO FILE-----------------------------------------
 
         # Model.to_csv(os.path.dirname(__file__) + os.sep + 'Output' + os.sep + 'Output.csv', index = False) #Save the model to the declared file. This should probably be replaced with a dynamic file name for later use in parametric simulations
-        Model.to_csv(Path_DrawProfile_Base_Output_Path + os.sep + 'OUTPUT_3_' + current_profile, index = False)
+        Model.to_csv(Path_DrawProfile_Base_Output_Path + os.sep + output_prefix + os.sep + current_profile, index = False)
 
 kWh_Dataframe.to_csv(Path_Summary_Output + os.sep + Name_kWh_Summary_File)
 Therms_Dataframe.to_csv(Path_Summary_Output + os.sep + Name_Therm_Summary_File)
