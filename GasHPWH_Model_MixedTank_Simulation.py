@@ -307,6 +307,7 @@ class COP_app:
         self.COP[0] = self.entry_C1.get()
         self.COP[1] = self.entry_C2.get()
      
+root_inputs.destroy() # Close the input window
 root_COP = tk.Tk()
 cop_app = COP_app(root_COP)
 root_COP.mainloop()
@@ -331,7 +332,7 @@ Parameters = [Coefficient_JacketLoss,
 
 #Close inputs and COP windows
 root_COP.destroy()
-root_inputs.destroy()
+#root_inputs.destroy()
 # with CodeTimer('CFA = {0}, Climate Zone = {1}'.format(FloorArea_Conditioned, ClimateZone)): #for testing - indent below code if using
 
 #%%--------------------------MODELING-----------------------------------------
