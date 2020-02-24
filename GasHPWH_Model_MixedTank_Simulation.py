@@ -75,9 +75,6 @@ Path_DrawProfile_Output_File_Name = 'Output_{0}.csv'.format(datetime.now().strft
 Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
-#COP regression calculations
-Coefficients_COP = [Coefficient_COP, Constant_COP] #combines the coefficient and the constant into an array
-Regression_COP = np.poly1d(Coefficients_COP) #Creates a 1-d linear regression stating the COP of the heat pump as a function of the temperature of water in the tank
 
 #Constants used in water-based calculations
 SpecificHeat_Water = 0.998 #Btu/(lb_m-F) @ 80 deg F, http://www.engineeringtoolbox.com/water-properties-d_1508.html
