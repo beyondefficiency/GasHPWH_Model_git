@@ -88,7 +88,7 @@ Constant_COP = 2.0341 #The constant in the COP equation
 
 #%%--------------------------USER INPUTS------------------------------------------
 # example full draw profile file name:
-# “Bldg=Single_CZ=1_Wat=Hot_Prof=1_SDLM=Yes_CFA=800_Inc=[FSCDB]_Ver=2019.csv”.
+# “Bldg=Single_CZ=1_Wat=Hot_Prof=1_SDLM=Yes_CFA=800_Inc=FSCDB_Ver=2019.csv”.
 WeatherSource = 'CA' #Type of weather file to use in the simulation. Currently, the script only supports CA
 Water = 'Hot' #specify whether the input profile is hot water only or mixed water
 Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes. The finer the timestep, the better the model, but the longer the model takes to run
@@ -97,7 +97,7 @@ Building_Type = 'Single' #Single or Multi depending on the building type of the 
 Bedrooms = 1 #Number of bedrooms used to create the draw profile. This number can range from 1 to 5
 FloorArea_Conditioned = 800 #Conditioned floor area of the dwelling used in the draw profile creation
 ClimateZone = 1 #CA climate zone to use in the simulation
-Include_Code = "[FSCDB]" #[FSCDB] is the longest this can be. This defines what type of draws are included in the draw profile. Faucet, Sink, Clothes washer, Dryer, and Bathroom
+Include_Code = 'FSCDB' #FSCDB is the longest this can be. This defines what type of draws are included in the draw profile. Faucet, Shower, Clothes washer, Dish Washer, and Bath
 Version = 2019 #the draw profile version used, since there were differences between the 2016 and 2019 versions.
 
 vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
@@ -154,7 +154,6 @@ Parameters = [Coefficient_JacketLoss,
                 NOx_Production_Rate]
 
 #%%--------------------------MODELING-----------------------------------------
-
 
 #A dataframe is created, based on the draw profile, in which to run the subsequent simulation
 #The first step is putting the draw profile data into the right format (E.g. If it's CBECC data,
