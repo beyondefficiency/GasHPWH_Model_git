@@ -66,17 +66,18 @@ ST = time.time() #begin to time the script
 
 #%%--------------------------GAS HPWH PARAMETERS------------------------------
 
-#These inputs are a series of constants describing the conditions of the simulation. The constants describing the gas HPWH itself come from communications with Alex of GTI, and may
-#need to be updated if he sends new values
+#These inputs are a series of constants describing the conditions of the simulation.
+#The constants describing the gas HPWH itself come from communications with Alex of GTI,
+#and may need to be updated if he sends new values
 Temperature_Tank_Initial = 135 #Deg F, initial temperature of water in the storage tank
 Temperature_Tank_Set = 135 #Deg F, set temperature of the HPWH
 Temperature_Tank_Set_Deadband = 35 #Deg F, deadband on the thermostat
-Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation
-Temperature_Ambient = 68 #deg F, temperature of the ambient air, placeholder for now
-Volume_Tank = 73 #gal, volume of water held in the storage tank
-Coefficient_JacketLoss = 5.75 #W/K, based on e-mail from Alex Fridyland on 29 Mar 2019
+Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation if the vary_inlet_temp variable is set = "False"
+Temperature_Ambient = 68 #deg F, temperature of the ambient air
+Volume_Tank = 73 #gal, volume of water held in the HPHW storage tank
+Coefficient_JacketLoss = 5.75 #W/K - defines heat loss through the storage tank walls (based on e-mail from Alex Fridyland on 29 Mar 2019)
 Power_Backup = 0 #W, electricity consumption of the backup resistance elements
-Threshold_Activation_Backup = 95 #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
+Threshold_Activation_Backup = 95 #Deg F, backup element operates when tank temperature is below this threshold. Note that this element operates at the same time as the heat pump if the threshhold is reached
 Threshold_Deactivation_Backup = 115 #Deg F, sets the temperature when the backup element disengages after it has been engaged
 FiringRate_HeatPump = 2930.72 #W, heat consumed by the heat pump
 ElectricityConsumption_Active = 158.5 #W, electricity consumed by the fan when the heat pump is running
@@ -87,17 +88,17 @@ Constant_COP = 2.0341 #The constant in the COP equation
 
 #%%--------------------------USER INPUTS------------------------------------------
 # example full draw profile file name:
-# Bldg=Single_CZ=1_Wat=Hot_Prof=1_SDLM=Yes_CFA=800_Inc=['F', 'S', 'C', 'D', 'B']_Ver=2019.csv
-WeatherSource = 'CA' #Type of weather file to use in the simulation. Currently only supports CA
-Water = 'Hot' #specify hot or mixed profile
-Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
-SDLM = 'Yes' #'Yes or No' dependig on what using
-Building_Type = 'Single' #Single or Multi depending on what using
-Bedrooms = 1 #Number of bedrooms used in the simulation
-FloorArea_Conditioned = 800 #Conditioned floor area of the dwelling used in the simulation
+# “Bldg=Single_CZ=1_Wat=Hot_Prof=1_SDLM=Yes_CFA=800_Inc=[FSCDB]_Ver=2019.csv”.
+WeatherSource = 'CA' #Type of weather file to use in the simulation. Currently, the script only supports CA
+Water = 'Hot' #specify whether the input profile is hot water only or mixed water
+Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes. The finer the timestep, the better the model, but the longer the model takes to run
+SDLM = 'Yes' #'Yes or No' depending on whether the Standard Distribution Loss Multiplier is incorporated in the input draw profile
+Building_Type = 'Single' #Single or Multi depending on the building type of the draw profile being used
+Bedrooms = 1 #Number of bedrooms used to create the draw profile. This number can range from 1 to 5
+FloorArea_Conditioned = 800 #Conditioned floor area of the dwelling used in the draw profile creation
 ClimateZone = 1 #CA climate zone to use in the simulation
-Include_Code = "[FSCDB]"
-Version = 2019
+Include_Code = "[FSCDB]" #[FSCDB] is the longest this can be. This defines what type of draws are included in the draw profile. Faucet, Sink, Clothes washer, Dryer, and Bathroom
+Version = 2019 #the draw profile version used, since there were differences between the 2016 and 2019 versions.
 
 vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
 
