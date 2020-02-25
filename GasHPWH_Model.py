@@ -54,6 +54,7 @@ def Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP):
     Model['Electric Usage (W-hrs)'] = Model['Elec Energy Demand (Watts)'] * Model['Timestep (min)']/60 + (Model['Energy Added Backup (Btu)']/3.413)
     Model['Gas Usage (Btu)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Energy Added Heat Pump (Btu)'] / Model['COP Gas'],0)
     Model['NOx Production (ng)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Timestep (min)'] * Parameters[10], 0)
+    Model['CO2 Production (lb)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Timestep (min)'] * Parameters[11], 0)
     Model['Energy Added Total (Btu)'] = Model['Energy Added Heat Pump (Btu)'] + Model['Energy Added Backup (Btu)'] #Calculate the total energy added to the tank during this timestep
     Model['Energy Added Heat Pump (Btu/min)'] = Parameters[4] * Regression_COP(Model['Tank Temperature (deg F)'])/ Minutes_In_Hour * (Model['Energy Added Heat Pump (Btu)'] > 0)    
     
