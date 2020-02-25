@@ -81,6 +81,8 @@ FiringRate_HeatPump = 2930.72 #W, heat consumed by the heat pump
 ElectricityConsumption_Active = 110 #W, electricity consumed by the fan when the heat pump is running
 ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
 NOx_Output = 10 #ng/J, NOx production of the HP when active
+CO2_Output_Gas = 0.0053 #metric tons/therm, CO2 production when gas absorption heat pump is active
+CO2_Output_Electricity = 0.212115 #ton/MWh, CO2 production when the HPWH consumes electricity. Default value is the average used in California
 Coefficient_COP = -0.0025 #The coefficient in the COP equation
 Constant_COP = 2.0341 #The constant in the COP equation
 
@@ -103,7 +105,7 @@ Path_Summary_Output = os.path.dirname(__file__) + os.sep + 'Output'
 Name_kWh_Summary_File = 'kWh_Usage_Summary_3.csv' #this file summarizes all the different profiles run
 Name_Therm_Summary_File = 'Therms_Usage_Summary_3.csv'  #this file summarizes all the different profiles run
 
-runs_limit = None # enter None if no limit...if you would like to limit the number of draw profiles the script runs (maybe for testing of the script so it doesnt take to long - enter that here)
+runs_limit = None # enter None if no limit...if you would like to limit the number of draw profiles the script runs (maybe for testing of the script so it doesnt take too long - enter that here)
 vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
@@ -121,11 +123,19 @@ Minutes_In_Hour = 60 #The number of minutes in an hour
 Seconds_In_Minute = 60 #The number of seconds in a minute
 W_To_BtuPerHour = 3.412142 #Converting from Watts to Btu/hr
 K_To_F_MagnitudeOnly = 1.8/1. #Converting from K/C to F. Only applicable for magnitudes, not actual temperatures (E.g. Yes for "A temperature difference of 10 C" but not for "The water temperature is 40 C")
-
-
+Btu_In_Therm = 100000 #The number of Btus in a therm
+Pounds_In_MetricTon = 2204.62 #Pounds in a metric ton
+Pounds_In_Ton = 2000 #Pounds in a US ton
+kWh_In_MWh = 1000 #kWh in MWh
 
 #Calculating the NOx production rate of the HPWH when HP is active
 NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
+
+#Calculating the CO2 production when the heat pump is active
+CO2_Production_Rate_Gas = CO2_Output_Gas * FiringRate_HeatPump * W_To_BtuPerHour * (1/Minutes_In_Hour) * (1/Btu_In_Therm) * Pounds_In_MetricTon
+
+#Calculating the CO2 produced per kWh of electricity consumed
+CO_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton * kWh_In_MWh
 
 #Converting quantities from SI units provided by Alex to (Incorrect, silly, obnoxious) IP units
 Coefficient_JacketLoss = Coefficient_JacketLoss * W_To_BtuPerHour * K_To_F_MagnitudeOnly #Converts Coefficient_JacketLoss from W/K to Btu/hr-F
@@ -136,17 +146,19 @@ FiringRate_HeatPump = FiringRate_HeatPump * W_To_BtuPerHour #Btu/hr
 ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
 
 #Stores the parameters describing the HPWH in a list for use in the model
-Parameters = [Coefficient_JacketLoss,
-                Power_Backup,
-                Threshold_Activation_Backup,
-                Threshold_Deactivation_Backup,
-                FiringRate_HeatPump,
-                Temperature_Tank_Set,
-                Temperature_Tank_Set_Deadband,
-                ThermalMass_Tank,
-                ElectricityConsumption_Active,
-                ElectricityConsumption_Idle,
-                NOx_Production_Rate]
+Parameters = [Coefficient_JacketLoss, #0
+                Power_Backup, #1
+                Threshold_Activation_Backup, #2
+                Threshold_Deactivation_Backup, #3
+                FiringRate_HeatPump, #4
+                Temperature_Tank_Set, #5
+                Temperature_Tank_Set_Deadband, #6
+                ThermalMass_Tank, #7
+                ElectricityConsumption_Active, #8
+                ElectricityConsumption_Idle, #9
+                NOx_Production_Rate, #10
+                CO2_Production_Rate_Gas, #11
+                CO_Production_Rate_Electricity] #12
 
 #%%--------------------------DATA STRUCTURES DEPENDENT ON USER INPUTS------------------------------------------
 
@@ -277,6 +289,7 @@ for current_profile in All_Variable_Dicts:
         Model['COP Gas'] = 0
         Model['Total Energy Change (Btu)'] = 0
         Model['Timestep (min)'] = Timestep
+        Model['CO2 Production (lb)'] = 0
 
         Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
 
@@ -286,7 +299,7 @@ for current_profile in All_Variable_Dicts:
         #%%--------------------------WRITE RESULTS TO FILE-----------------------------------------
 
         # Model.to_csv(os.path.dirname(__file__) + os.sep + 'Output' + os.sep + 'Output.csv', index = False) #Save the model to the declared file. This should probably be replaced with a dynamic file name for later use in parametric simulations
-        Model.to_csv(Path_DrawProfile_Base_Output_Path + os.sep + output_prefix + os.sep + current_profile, index = False)
+        Model.to_csv(Path_DrawProfile_Base_Output_Path + os.sep + output_prefix + current_profile, index = False)
 
 kWh_Dataframe.to_csv(Path_Summary_Output + os.sep + Name_kWh_Summary_File)
 Therms_Dataframe.to_csv(Path_Summary_Output + os.sep + Name_Therm_Summary_File)

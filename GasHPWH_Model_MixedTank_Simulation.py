@@ -69,20 +69,22 @@ ST = time.time() #begin to time the script
 #These inputs are a series of constants describing the conditions of the simulation.
 #The constants describing the gas HPWH itself come from communications with Alex of GTI,
 #and may need to be updated if he sends new values
-Temperature_Tank_Initial = 135 #Deg F, initial temperature of water in the storage tank
-Temperature_Tank_Set = 135 #Deg F, set temperature of the HPWH
-Temperature_Tank_Set_Deadband = 35 #Deg F, deadband on the thermostat
-Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation if the vary_inlet_temp variable is set = "False"
-Temperature_Ambient = 68 #deg F, temperature of the ambient air
-Volume_Tank = 73 #gal, volume of water held in the HPHW storage tank
-Coefficient_JacketLoss = 5.75 #W/K - defines heat loss through the storage tank walls (based on e-mail from Alex Fridyland on 29 Mar 2019)
-Power_Backup = 0 #W, electricity consumption of the backup resistance elements
-Threshold_Activation_Backup = 95 #Deg F, backup element operates when tank temperature is below this threshold. Note that this element operates at the same time as the heat pump if the threshhold is reached
-Threshold_Deactivation_Backup = 115 #Deg F, sets the temperature when the backup element disengages after it has been engaged
+Temperature_Tank_Initial = 115 #Deg F, initial temperature of water in the storage tank. 115 F is the standard set temperature in CBECC
+Temperature_Tank_Set = 115 #Deg F, set temperature of the HPWH. 115 F is the standard set temperature in CBECC
+Temperature_Tank_Set_Deadband = 15 #Deg F, deadband on the thermostat based on e-mail from Paul Glanville on Oct 31, 2019
+Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation
+Temperature_Ambient = 68 #deg F, temperature of the ambient air, placeholder for now
+Volume_Tank = 65 #gal, volume of water held in the storage tank
+Coefficient_JacketLoss_WPerK = 2.638 #W/K, Default value from Paul Glanville on Oct 31, 2019
+Power_Backup = 1250 #W, electricity consumption of the backup resistance elements
+Threshold_Activation_Backup = 95 #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
+Threshold_Deactivation_Backup = 105 #Deg F, sets the temperature when the backup element disengages after it has been engaged
 FiringRate_HeatPump = 2930.72 #W, heat consumed by the heat pump
-ElectricityConsumption_Active = 158.5 #W, electricity consumed by the fan when the heat pump is running
+ElectricityConsumption_Active = 110 #W, electricity consumed by the fan when the heat pump is running
 ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
 NOx_Output = 10 #ng/J, NOx production of the HP when active
+CO2_Output_Gas = 0.0053 #metric tons/therm, CO2 production when gas absorption heat pump is active
+CO2_Output_Electricity = 0.212115 #ton/MWh, CO2 production when the HPWH consumes electricity. Default value is the average used in California
 Coefficient_COP = -0.0025 #The coefficient in the COP equation
 Constant_COP = 2.0341 #The constant in the COP equation
 
@@ -94,8 +96,8 @@ Water = 'Hot' #specify whether the input profile is hot water only or mixed wate
 Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes. The finer the timestep, the better the model, but the longer the model takes to run
 SDLM = 'Yes' #'Yes or No' depending on whether the Standard Distribution Loss Multiplier is incorporated in the input draw profile
 Building_Type = 'Single' #Single or Multi depending on the building type of the draw profile being used
-Bedrooms = 1 #Number of bedrooms used to create the draw profile. This number can range from 1 to 5
-FloorArea_Conditioned = 800 #Conditioned floor area of the dwelling used in the draw profile creation
+Bedrooms = 5 #Number of bedrooms used to create the draw profile. This number can range from 1 to 5
+FloorArea_Conditioned = 3500 #Conditioned floor area of the dwelling used in the draw profile creation
 ClimateZone = 1 #CA climate zone to use in the simulation
 Include_Code = 'FSCDB' #FSCDB is the longest this can be. This defines what type of draws are included in the draw profile. Faucet, Shower, Clothes washer, Dish Washer, and Bath
 Version = 2019 #the draw profile version used, since there were differences between the 2016 and 2019 versions.
@@ -110,7 +112,7 @@ Path_DrawProfile = Path_DrawProfile_Base_Path + os.sep + Path_DrawProfile_File_N
 
 # Path_DrawProfile_Base_Output_Path = '/Users/nathanieliltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Individual Outputs of Simulation Model'
 Path_DrawProfile_Output_Base_Path = os.path.dirname(__file__) + os.sep + 'Output'
-Path_DrawProfile_Output_File_Name = 'Output_Model_{0}.csv'.format(datetime.now().strftime("%d_%m_%Y_%H_%M")) #mark output by time run
+Path_DrawProfile_Output_File_Name = 'Output_' + Path_DrawProfile_File_Name #Save the file with Output_ followed by the name of the draw profile
 Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
@@ -128,12 +130,22 @@ Minutes_In_Hour = 60 #The number of minutes in an hour
 Seconds_In_Minute = 60 #The number of seconds in a minute
 W_To_BtuPerHour = 3.412142 #Converting from Watts to Btu/hr
 K_To_F_MagnitudeOnly = 1.8/1. #Converting from K/C to F. Only applicable for magnitudes, not actual temperatures (E.g. Yes for "A temperature difference of 10 C" but not for "The water temperature is 40 C")
+Btu_In_Therm = 100000 #The number of Btus in a therm
+Pounds_In_MetricTon = 2204.62 #Pounds in a metric ton
+Pounds_In_Ton = 2000 #Pounds in a US ton
+kWh_In_MWh = 1000 #kWh in MWh
 
 #Calculating the NOx production rate of the HPWH when HP is active
 NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
 
+#Calculating the CO2 production when the heat pump is active
+CO2_Production_Rate_Gas = CO2_Output_Gas * FiringRate_HeatPump * W_To_BtuPerHour * (1/Minutes_In_Hour) * (1/Btu_In_Therm) * Pounds_In_MetricTon
+
+#Calculating the CO2 produced per kWh of electricity consumed
+CO_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton * kWh_In_MWh
+
 #Converting quantities from SI units provided by Alex to (Incorrect, silly, obnoxious) IP units
-Coefficient_JacketLoss = Coefficient_JacketLoss * W_To_BtuPerHour * K_To_F_MagnitudeOnly #Converts Coefficient_JacketLoss from W/K to Btu/hr-F
+Coefficient_JacketLoss = Coefficient_JacketLoss_WPerK * W_To_BtuPerHour / K_To_F_MagnitudeOnly #Converts Coefficient_JacketLoss from W/K to Btu/hr-F
 Power_Backup = Power_Backup * W_To_BtuPerHour #Btu/hr
 FiringRate_HeatPump = FiringRate_HeatPump * W_To_BtuPerHour #Btu/hr
 
@@ -141,17 +153,19 @@ FiringRate_HeatPump = FiringRate_HeatPump * W_To_BtuPerHour #Btu/hr
 ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
 
 #Stores the parameters describing the HPWH in a list for use in the model
-Parameters = [Coefficient_JacketLoss,
-                Power_Backup,
-                Threshold_Activation_Backup,
-                Threshold_Deactivation_Backup,
-                FiringRate_HeatPump,
-                Temperature_Tank_Set,
-                Temperature_Tank_Set_Deadband,
-                ThermalMass_Tank,
-                ElectricityConsumption_Active,
-                ElectricityConsumption_Idle,
-                NOx_Production_Rate]
+Parameters = [Coefficient_JacketLoss, #0
+                Power_Backup, #1
+                Threshold_Activation_Backup, #2
+                Threshold_Deactivation_Backup, #3
+                FiringRate_HeatPump, #4
+                Temperature_Tank_Set, #5
+                Temperature_Tank_Set_Deadband, #6
+                ThermalMass_Tank, #7
+                ElectricityConsumption_Active, #8
+                ElectricityConsumption_Idle, #9
+                NOx_Production_Rate, #10
+                CO2_Production_Rate_Gas, #11
+                CO_Production_Rate_Electricity] #12
 
 #%%--------------------------MODELING-----------------------------------------
 
@@ -232,6 +246,7 @@ Model['Energy Added Total (Btu)'] = 0
 Model['COP Gas'] = 0
 Model['Total Energy Change (Btu)'] = 0
 Model['Timestep (min)'] = Timestep
+Model['CO2 Production (lb)'] = 0
 
 #The following code simulates the performance of the gas HPWH
 Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
