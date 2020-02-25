@@ -62,6 +62,7 @@ import GasHPWH_Model as GasHPWH
 from linetimer import CodeTimer
 import tkinter as tk
 from tkinter import filedialog
+import tkFileDialog
 from datetime import datetime
 
 ST = time.time() #begin to time the script
@@ -70,9 +71,6 @@ ST = time.time() #begin to time the script
 Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
 
 vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
-Path_DrawProfile_Output_Base_Path = 'Output'
-Path_DrawProfile_Output_File_Name = 'Output_{0}.csv'.format(datetime.now().strftime("%d_%m_%Y_%H_%M")) #mark output by time run
-Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
 
@@ -80,7 +78,6 @@ Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_Draw
 SpecificHeat_Water = 0.998 #Btu/(lb_m-F) @ 80 deg F, http://www.engineeringtoolbox.com/water-properties-d_1508.html
 Density_Water = 8.3176 #lb-m/gal @ 80 deg F, http://www.engineeringtoolbox.com/water-density-specific-weight-d_595.html
 
-# used in --onefile exe
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     try:
@@ -92,13 +89,13 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
-DrawProfile_app = tk.Tk()
-DrawProfile_app.withdraw()
-my_filetypes = [('all files', '.csv')]
-Path_DrawProfile = filedialog.askopenfilename(parent=DrawProfile_app,
-                                    initialdir=os.getcwd(),
-                                    title="Please select the Draw Profile:",
-                                    filetypes=my_filetypes)
+#DrawProfile_app = tk.Tk()
+#DrawProfile_app.withdraw()
+#my_filetypes = [('all files', '.csv')]
+#Path_DrawProfile = filedialog.askopenfilename(parent=DrawProfile_app,
+#                                    initialdir=os.getcwd(),
+#                                    title="Please select the Draw Profile:",
+#                                    filetypes=my_filetypes)
 
 #Constants used for unit conversions
 Hours_In_Day = 24 #The number of hours in a day
@@ -342,88 +339,105 @@ root_COP.destroy()
 #The first step is putting the draw profile data into the right format (E.g. If it's CBECC data,
 # we need to convert from event-based to timestep-based)
 
-Draw_Profile = pd.read_csv(Path_DrawProfile) #Create a data frame called Draw_Profile containing the CBECC-Res information
+DrawProfile_app = tk.Tk()
+DrawProfile_app.withdraw()
+DrawProfile_app.directory = tkFileDialog.askdirectory()
 
-Draw_Profile['Day of Year (Day)'] = Draw_Profile['Day of Year (Day)'].astype(int) #make sure the days are in integer format, not float, as a sanity check on work below
-Unique_Days = Draw_Profile['Day of Year (Day)'].unique() #Identifies the number of unique days included in the draw profile
-Continuous_Index_Range_of_Days = range(Draw_Profile['Day of Year (Day)'].min(), Draw_Profile['Day of Year (Day)'].max() + 1) #outlines the full time coveraeofthe data (full days)
-Missing_Days = [x for x in range(Draw_Profile['Day of Year (Day)'].min(), Draw_Profile['Day of Year (Day)'].max() + 1) if x not in Unique_Days] #identifies the specific days missing
+for File_DrawProfile in os.listdir(DrawProfile_app.directory):
+    if File_DrawProfile.endswith(".csv"):
+        print(File_DrawProfile)
 
-#This code creates a dataframe covering the full continuous range of draw profiles with whatever timesteps are specified and converts the CBECC-Res draw profiles into that format
-Index_Model= int(len(Continuous_Index_Range_of_Days) * Hours_In_Day * Minutes_In_Hour / Timestep) #Identifies the number of timestep bins covered in the draw profile
-Model = pd.DataFrame(index = range(Index_Model)) #Creates a data frame with 1 row for each bin in the draw profile
-Model['Time (min)'] = Model.index * Timestep #Create a column in the data frame giving the time at the beginning of each timestep bin
-
-Model['Hot Water Draw Volume (gal)'] = 0 #Set the default data for hot water draw volume in each time step to 0. This value will later be edited as specific flow volumes for each time step are calculated
-Model['Inlet Water Temperature (deg F)'] = 0 #initialize the inlet temperature column with all 0's, to be filled in below
-First_Day = Draw_Profile.loc[0, 'Day of Year (Day)'] #Identifies the day (In integer relative to 365 form, not date form) of the first day of the draw profile
-Draw_Profile['Start Time of Profile (min)'] = Draw_Profile['Start time (hr)'] * Minutes_In_Hour + (Draw_Profile['Day of Year (Day)'] - First_Day) * Hours_In_Day * Minutes_In_Hour #Identifies the starting time of each hot water draw in Draw_Profile relative to first day of draw used
-Draw_Profile['End Time of Profile (min)'] = Draw_Profile['Start time (hr)'] * Minutes_In_Hour + Draw_Profile['Duration (min)'] + (Draw_Profile['Day of Year (Day)'] - First_Day) * Hours_In_Day * Minutes_In_Hour #Identifies the ending time of each hot water draw in Draw_Profile relative to first day of draw used
-
-for i in Draw_Profile.index: #Iterates through each draw in Draw_Profile
-    Start_Time = Draw_Profile.loc[i, 'Start Time of Profile (min)'] #Reads the time when the draw starts
-    End_Time = Draw_Profile.loc[i, 'End Time of Profile (min)'] #Reads the time when the draw ends
-    Flow_Rate = Draw_Profile.loc[i, 'Hot Water Flow Rate (gpm)'] #Reads the hot water flow rate of the draw and stores it in the variable Flow_Rate
-    Duration = Draw_Profile.loc[i, 'Duration (min)'] #Reads the duration of the draw and stores it in the variable Duration
-    Water_Quantity = Flow_Rate * Duration #total draw volume is flowrate times duration
-
-    Bin_Start = int(np.floor(Start_Time/Timestep)) #finds the model timestep bin when the draw starts, 0 indexed
-    Time_First_Bin = (Bin_Start+1) * Timestep - Start_Time #first pass at flow time of draw in first bin
-    if Time_First_Bin > Duration:
-        Time_First_Bin = Duration #if the draw only occurs in one bin, the time at the given flow rate is limited to the total draw time.
-
-    bin_count = 0
-    while Water_Quantity > 0: #dump out water until the draw is used up
-        if bin_count == 0:
-            Water_Dumped = Flow_Rate * Time_First_Bin
-            Model.loc[Bin_Start, 'Hot Water Draw Volume (gal)'] += Water_Dumped  #Add the volume within the first covered bin
-            Water_Quantity -= Water_Dumped #keep track of water remaining
-            bin_count += 1 #keep track of correct bin to put water in
-        else:
-            if Water_Quantity >= Flow_Rate * Timestep: #if there is enough water left to flow for more than a whole timestep bin
-                Water_Dumped = Flow_Rate * Timestep
-                Model.loc[Bin_Start + bin_count, 'Hot Water Draw Volume (gal)'] += Water_Dumped  #Add the volume to the next bin
-            else:
-                Water_Dumped = Water_Quantity
-                Model.loc[Bin_Start + bin_count, 'Hot Water Draw Volume (gal)'] += Water_Dumped  #dump the remainder of the water into the final bin
-            bin_count += 1 #keep track of correct bin to put water in
-            Water_Quantity -= Water_Dumped #keep track of water remaining
-
-    if vary_inlet_temp == True:
-        This_Inlet_Temperature = Draw_Profile.loc[i, 'Mains Temperature (deg F)'] #get inlet water temperature from profile
-        for i in range(bin_count):
-            Model.loc[Bin_Start+i, 'Inlet Water Temperature (deg F)'] = This_Inlet_Temperature
-
-#fill in remaining values for mains temperature:
-if vary_inlet_temp == True:
-    Model['Inlet Water Temperature (deg F)'] = Model['Inlet Water Temperature (deg F)'].replace(to_replace=0, method='ffill') #forward fill method - uses closed previous non-zero value
-    Model['Inlet Water Temperature (deg F)'] = Model['Inlet Water Temperature (deg F)'].replace(to_replace=0, method='bfill') #backward fill method - uses closest subsequent non-zero value
-else: #(vary_inlet_temp == False)
-    Model['Inlet Water Temperature (deg F)'] = Temperature_Water_Inlet #Sets the inlet temperature in the model equal to the value specified in INPUTS. This value could be replaced with a series of value
-
-Model['Ambient Temperature (deg F)'] = Temperature_Ambient #Sets the ambient temperature in the model equal to the value specified in INPUTS. This value could be replaced with a series of values
-
-# Initializes a bunch of values at either 0 or initial temperature. They will be overwritten later as needed
-Model['Tank Temperature (deg F)'] = 0
-Model.loc[0, 'Tank Temperature (deg F)'] = Temperature_Tank_Initial
-Model.loc[1, 'Tank Temperature (deg F)'] = Temperature_Tank_Initial
-Model['Jacket Losses (Btu)'] = 0
-Model['Energy Withdrawn (Btu)'] = 0
-Model['Energy Added Backup (Btu)'] = 0
-Model['Energy Added Heat Pump (Btu)'] = 0
-Model['Energy Added Total (Btu)'] = 0
-Model['COP Gas'] = 0
-Model['Total Energy Change (Btu)'] = 0
-Model['Timestep (min)'] = Timestep
-
-#The following code simulates the performance of the gas HPWH
-Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
-
-#%%--------------------------WRITE RESULTS TO FILE-----------------------------------------
-# Make output dir if it doesn't already exist:
-if not os.path.exists('Output'):
-    os.makedirs('Output')
-Model.to_csv(Path_DrawProfile_Output, index = False) #Save the model to the declared file.
+        Draw_Profile = pd.read_csv(os.path.join(DrawProfile_app.directory,File_DrawProfile)) #Create a data frame called Draw_Profile containing the CBECC-Res information
+        
+        Draw_Profile['Day of Year (Day)'] = Draw_Profile['Day of Year (Day)'].astype(int) #make sure the days are in integer format, not float, as a sanity check on work below
+        Unique_Days = Draw_Profile['Day of Year (Day)'].unique() #Identifies the number of unique days included in the draw profile
+        Continuous_Index_Range_of_Days = range(Draw_Profile['Day of Year (Day)'].min(), Draw_Profile['Day of Year (Day)'].max() + 1) #outlines the full time coveraeofthe data (full days)
+        Missing_Days = [x for x in range(Draw_Profile['Day of Year (Day)'].min(), Draw_Profile['Day of Year (Day)'].max() + 1) if x not in Unique_Days] #identifies the specific days missing
+        
+        #This code creates a dataframe covering the full continuous range of draw profiles with whatever timesteps are specified and converts the CBECC-Res draw profiles into that format
+        Index_Model= int(len(Continuous_Index_Range_of_Days) * Hours_In_Day * Minutes_In_Hour / Timestep) #Identifies the number of timestep bins covered in the draw profile
+        Model = pd.DataFrame(index = range(Index_Model)) #Creates a data frame with 1 row for each bin in the draw profile
+        Model['Time (min)'] = Model.index * Timestep #Create a column in the data frame giving the time at the beginning of each timestep bin
+        
+        Model['Hot Water Draw Volume (gal)'] = 0 #Set the default data for hot water draw volume in each time step to 0. This value will later be edited as specific flow volumes for each time step are calculated
+        Model['Inlet Water Temperature (deg F)'] = 0 #initialize the inlet temperature column with all 0's, to be filled in below
+        First_Day = Draw_Profile.loc[0, 'Day of Year (Day)'] #Identifies the day (In integer relative to 365 form, not date form) of the first day of the draw profile
+        Draw_Profile['Start Time of Profile (min)'] = Draw_Profile['Start time (hr)'] * Minutes_In_Hour + (Draw_Profile['Day of Year (Day)'] - First_Day) * Hours_In_Day * Minutes_In_Hour #Identifies the starting time of each hot water draw in Draw_Profile relative to first day of draw used
+        Draw_Profile['End Time of Profile (min)'] = Draw_Profile['Start time (hr)'] * Minutes_In_Hour + Draw_Profile['Duration (min)'] + (Draw_Profile['Day of Year (Day)'] - First_Day) * Hours_In_Day * Minutes_In_Hour #Identifies the ending time of each hot water draw in Draw_Profile relative to first day of draw used
+        
+        for i in Draw_Profile.index: #Iterates through each draw in Draw_Profile
+            Start_Time = Draw_Profile.loc[i, 'Start Time of Profile (min)'] #Reads the time when the draw starts
+            End_Time = Draw_Profile.loc[i, 'End Time of Profile (min)'] #Reads the time when the draw ends
+            Flow_Rate = Draw_Profile.loc[i, 'Hot Water Flow Rate (gpm)'] #Reads the hot water flow rate of the draw and stores it in the variable Flow_Rate
+            Duration = Draw_Profile.loc[i, 'Duration (min)'] #Reads the duration of the draw and stores it in the variable Duration
+            Water_Quantity = Flow_Rate * Duration #total draw volume is flowrate times duration
+        
+            Bin_Start = int(np.floor(Start_Time/Timestep)) #finds the model timestep bin when the draw starts, 0 indexed
+            Time_First_Bin = (Bin_Start+1) * Timestep - Start_Time #first pass at flow time of draw in first bin
+            if Time_First_Bin > Duration:
+                Time_First_Bin = Duration #if the draw only occurs in one bin, the time at the given flow rate is limited to the total draw time.
+        
+            bin_count = 0
+            while Water_Quantity > 0: #dump out water until the draw is used up
+                if bin_count == 0:
+                    Water_Dumped = Flow_Rate * Time_First_Bin
+                    Model.loc[Bin_Start, 'Hot Water Draw Volume (gal)'] += Water_Dumped  #Add the volume within the first covered bin
+                    Water_Quantity -= Water_Dumped #keep track of water remaining
+                    bin_count += 1 #keep track of correct bin to put water in
+                else:
+                    if Water_Quantity >= Flow_Rate * Timestep: #if there is enough water left to flow for more than a whole timestep bin
+                        Water_Dumped = Flow_Rate * Timestep
+                        Model.loc[Bin_Start + bin_count, 'Hot Water Draw Volume (gal)'] += Water_Dumped  #Add the volume to the next bin
+                    else:
+                        Water_Dumped = Water_Quantity
+                        Model.loc[Bin_Start + bin_count, 'Hot Water Draw Volume (gal)'] += Water_Dumped  #dump the remainder of the water into the final bin
+                    bin_count += 1 #keep track of correct bin to put water in
+                    Water_Quantity -= Water_Dumped #keep track of water remaining
+        
+            if vary_inlet_temp == True:
+                This_Inlet_Temperature = Draw_Profile.loc[i, 'Mains Temperature (deg F)'] #get inlet water temperature from profile
+                for i in range(bin_count):
+                    Model.loc[Bin_Start+i, 'Inlet Water Temperature (deg F)'] = This_Inlet_Temperature
+        
+        #fill in remaining values for mains temperature:
+        if vary_inlet_temp == True:
+            Model['Inlet Water Temperature (deg F)'] = Model['Inlet Water Temperature (deg F)'].replace(to_replace=0, method='ffill') #forward fill method - uses closed previous non-zero value
+            Model['Inlet Water Temperature (deg F)'] = Model['Inlet Water Temperature (deg F)'].replace(to_replace=0, method='bfill') #backward fill method - uses closest subsequent non-zero value
+        else: #(vary_inlet_temp == False)
+            Model['Inlet Water Temperature (deg F)'] = Temperature_Water_Inlet #Sets the inlet temperature in the model equal to the value specified in INPUTS. This value could be replaced with a series of value
+        
+        Model['Ambient Temperature (deg F)'] = Temperature_Ambient #Sets the ambient temperature in the model equal to the value specified in INPUTS. This value could be replaced with a series of values
+        
+        # Initializes a bunch of values at either 0 or initial temperature. They will be overwritten later as needed
+        Model['Tank Temperature (deg F)'] = 0
+        Model.loc[0, 'Tank Temperature (deg F)'] = Temperature_Tank_Initial
+        Model.loc[1, 'Tank Temperature (deg F)'] = Temperature_Tank_Initial
+        Model['Jacket Losses (Btu)'] = 0
+        Model['Energy Withdrawn (Btu)'] = 0
+        Model['Energy Added Backup (Btu)'] = 0
+        Model['Energy Added Heat Pump (Btu)'] = 0
+        Model['Energy Added Total (Btu)'] = 0
+        Model['COP Gas'] = 0
+        Model['Total Energy Change (Btu)'] = 0
+        Model['Timestep (min)'] = Timestep
+        
+        #The following code simulates the performance of the gas HPWH
+        Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
+        
+        #%%--------------------------WRITE RESULTS TO FILE-----------------------------------------
+        Path_DrawProfile_Output_Base_Path = 'Output'
+        Path_DrawProfile_Output_File_Name = 'GasHPWH_Output_' + File_DrawProfile
+        Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
+        
+        # Make output dir if it doesn't already exist:
+        if not os.path.exists('Output'):
+            os.makedirs('Output')
+        Model.to_csv(Path_DrawProfile_Output, index = False) #Save the model to the declared file.
+    
+        continue
+    
+    else:
+        continue
 
 ET = time.time() #begin to time the script
 print('script ran in {0} seconds'.format((ET - ST)))
