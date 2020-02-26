@@ -304,5 +304,6 @@ for current_profile in All_Variable_Dicts:
 kWh_Dataframe.to_csv(Path_Summary_Output + os.sep + Name_kWh_Summary_File)
 Therms_Dataframe.to_csv(Path_Summary_Output + os.sep + Name_Therm_Summary_File)
 
-End_Time = time.time() #begin to time the script
+#%%--------------------------TIMING--------------------------------
+End_Time = time.time() #mark end time of the script
 print('script ran{0} draw profiles in {1} seconds'.format(count,(End_Time - Start_Time)))
