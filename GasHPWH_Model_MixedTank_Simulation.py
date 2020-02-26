@@ -66,13 +66,11 @@ from datetime import datetime
 
 ST = time.time() #begin to time the script
 
+
 #%%--------------------------USER INPUTS------------------------------------------
 Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
 
 vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
-Path_DrawProfile_Output_Base_Path = 'Output'
-Path_DrawProfile_Output_File_Name = 'Output_{0}.csv'.format(datetime.now().strftime("%d_%m_%Y_%H_%M")) #mark output by time run
-Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
 
@@ -106,6 +104,10 @@ Minutes_In_Hour = 60 #The number of minutes in an hour
 Seconds_In_Minute = 60 #The number of seconds in a minute
 W_To_BtuPerHour = 3.412142 #Converting from Watts to Btu/hr
 K_To_F_MagnitudeOnly = 1.8/1. #Converting from K/C to F. Only applicable for magnitudes, not actual temperatures (E.g. Yes for "A temperature difference of 10 C" but not for "The water temperature is 40 C")
+Btu_In_Therm = 100000 #The number of Btus in a therm
+Pounds_In_MetricTon = 2204.62 #Pounds in a metric ton
+Pounds_In_Ton = 2000 #Pounds in a US ton
+kWh_In_MWh = 1000 #kWh in MWh
 
 # GUI: creates inputs window with default values
 class Inputs:
@@ -205,21 +207,22 @@ class Inputs:
         #These inputs are a series of constants describing the conditions of the simulation. The constants describing the gas HPWH itself come from communications with Alex of GTI, and may
         #need to be updated if he sends new values
         # Set gas HPWH constant values
-        self.Temperature_Tank_Initial = 135 #Deg F, initial temperature of water in the storage tank
-        self.Temperature_Tank_Set = 135 #Deg F, set temperature of the HPWH
-        self.Temperature_Tank_Set_Deadband = 35 #Deg F, deadband on the thermostat
+        self.Temperature_Tank_Initial = 115 #Deg F, initial temperature of water in the storage tank
+        self.Temperature_Tank_Set = 115 #Deg F, set temperature of the HPWH
+        self.Temperature_Tank_Set_Deadband = 15 #Deg F, deadband on the thermostat
         self.Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation
         self.Temperature_Ambient = 68 #deg F, temperature of the ambient air, placeholder for now
-        self.Volume_Tank = 73 #gal, volume of water held in the storage tank
-        self.Coefficient_JacketLoss = 5.75 #W/K, based on e-mail from Alex Fridyland on 29 Mar 2019
-        self.Power_Backup = 0 #W, electricity consumption of the backup resistance elements
+        self.Volume_Tank = 65 #gal, volume of water held in the storage tank
+        self.Coefficient_JacketLoss = 2.638 #W/K, based on e-mail from Alex Fridyland on 29 Mar 2019
+        self.Power_Backup = 1250 #W, electricity consumption of the backup resistance elements
         self.Threshold_Activation_Backup = 95 #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
-        self.Threshold_Deactivation_Backup = 115 #Deg F, sets the temperature when the backup element disengages after it has been engaged
+        self.Threshold_Deactivation_Backup = 105 #Deg F, sets the temperature when the backup element disengages after it has been engaged
         self.FiringRate_HeatPump = 2930.72 #W, heat consumed by the heat pump
-        self.ElectricityConsumption_Active = 158.5 #W, electricity consumed by the fan when the heat pump is running
+        self.ElectricityConsumption_Active = 110 #W, electricity consumed by the fan when the heat pump is running
         self.ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
         self.NOx_Output = 10 #ng/J, NOx production of the HP when active
-
+        CO2_Output_Gas = 0.0053 #metric tons/therm, CO2 production when gas absorption heat pump is active
+        CO2_Output_Electricity = 0.212115 #ton/MWh, CO2 production when the HPWH consumes electricity. Default value is the average used in California
         self.close_button = tk.Button(master, text="Next", command=master.quit)
         self.close_button.grid(row=17, column=2)
 
@@ -262,8 +265,14 @@ NOx_Output = inputs.NOx_Output #ng/J, NOx production of the HP when active
 #Calculating the NOx production rate of the HPWH when HP is active
 NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
 
+#Calculating the CO2 production when the heat pump is active
+CO2_Production_Rate_Gas = CO2_Output_Gas * FiringRate_HeatPump * W_To_BtuPerHour * (1/Minutes_In_Hour) * (1/Btu_In_Therm) * Pounds_In_MetricTon
+
+#Calculating the CO2 produced per kWh of electricity consumed
+CO_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton * kWh_In_MWh
+
 #Converting quantities from SI units provided by Alex to (Incorrect, silly, obnoxious) IP units
-Coefficient_JacketLoss = Coefficient_JacketLoss * W_To_BtuPerHour * K_To_F_MagnitudeOnly #Converts Coefficient_JacketLoss from W/K to Btu/hr-F
+Coefficient_JacketLoss = Coefficient_JacketLoss_WPerK * W_To_BtuPerHour / K_To_F_MagnitudeOnly #Converts Coefficient_JacketLoss from W/K to Btu/hr-F
 Power_Backup = Power_Backup * W_To_BtuPerHour #Btu/hr
 FiringRate_HeatPump = FiringRate_HeatPump * W_To_BtuPerHour #Btu/hr
 
@@ -318,25 +327,24 @@ Coefficients_COP= cop_app.COP
 Regression_COP = np.poly1d(Coefficients_COP)
 
 #Stores the parameters describing the HPWH in a list for use in the model
-
-Parameters = [Coefficient_JacketLoss,
-                Power_Backup,
-                Threshold_Activation_Backup,
-                Threshold_Deactivation_Backup,
-                FiringRate_HeatPump,
-                Temperature_Tank_Set,
-                Temperature_Tank_Set_Deadband,
-                ThermalMass_Tank,
-                ElectricityConsumption_Active,
-                ElectricityConsumption_Idle,
-                NOx_Production_Rate]
-
+Parameters = [Coefficient_JacketLoss, #0
+                Power_Backup, #1
+                Threshold_Activation_Backup, #2
+                Threshold_Deactivation_Backup, #3
+                FiringRate_HeatPump, #4
+                Temperature_Tank_Set, #5
+                Temperature_Tank_Set_Deadband, #6
+                ThermalMass_Tank, #7
+                ElectricityConsumption_Active, #8
+                ElectricityConsumption_Idle, #9
+                NOx_Production_Rate, #10
+                CO2_Production_Rate_Gas, #11
+                CO_Production_Rate_Electricity] #12
 
 #Close COP window
 root_COP.destroy()
 
 #%%--------------------------MODELING-----------------------------------------
-
 
 #A dataframe is created, based on the draw profile, in which to run the subsequent simulation
 #The first step is putting the draw profile data into the right format (E.g. If it's CBECC data,
@@ -415,11 +423,16 @@ Model['Energy Added Total (Btu)'] = 0
 Model['COP Gas'] = 0
 Model['Total Energy Change (Btu)'] = 0
 Model['Timestep (min)'] = Timestep
+Model['CO2 Production (lb)'] = 0
 
 #The following code simulates the performance of the gas HPWH
 Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
 
 #%%--------------------------WRITE RESULTS TO FILE-----------------------------------------
+
+Path_DrawProfile_Output_Base_Path = 'Output'
+Path_DrawProfile_Output_File_Name = Path_DrawProfile
+Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
 # Make output dir if it doesn't already exist:
 if not os.path.exists('Output'):
     os.makedirs('Output')

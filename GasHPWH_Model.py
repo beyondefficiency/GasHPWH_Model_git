@@ -17,6 +17,7 @@ import pandas as pd
 Minutes_In_Hour = 60 #Conversion between hours and minutes
 SpecificHeat_Water = 0.998 #Btu/(lb_m-F) @ 80 deg F, http://www.engineeringtoolbox.com/water-properties-d_1508.html
 Density_Water = 8.3176 #lb-m/gal @ 80 deg F, http://www.engineeringtoolbox.com/water-density-specific-weight-d_595.html
+kWh_In_Wh = 1/1000 #Conversion from Wh to kWh
 
 def Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP):
 
@@ -54,6 +55,7 @@ def Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP):
     Model['Electric Usage (W-hrs)'] = Model['Elec Energy Demand (Watts)'] * Model['Timestep (min)']/60 + (Model['Energy Added Backup (Btu)']/3.413)
     Model['Gas Usage (Btu)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Energy Added Heat Pump (Btu)'] / Model['COP Gas'],0)
     Model['NOx Production (ng)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Timestep (min)'] * Parameters[10], 0)
+    Model['CO2 Production (lb)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Timestep (min)'] * Parameters[11], 0) + Model['Electric Usage (W-hrs)'] * kWh_In_Wh * Parameters[12]
     Model['Energy Added Total (Btu)'] = Model['Energy Added Heat Pump (Btu)'] + Model['Energy Added Backup (Btu)'] #Calculate the total energy added to the tank during this timestep
     Model['Energy Added Heat Pump (Btu/min)'] = Parameters[4] * Regression_COP(Model['Tank Temperature (deg F)'])/ Minutes_In_Hour * (Model['Energy Added Heat Pump (Btu)'] > 0)    
     
