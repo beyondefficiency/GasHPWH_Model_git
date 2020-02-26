@@ -35,7 +35,9 @@ calculated mains temperature values. It also adds a column called 'Hour of Year
 (hr)' representing the hour of the year (Assuming midnight, Jan 1 start). This
 function does not save the data file, leaving the user with the flexibility of 
 saving it where they desire. The algorithm has been validated by comparing it 
-to the results for Chicago available in the E+ documentation
+to the results for Chicago available in the E+ documentation This function only
+works in IP units as the gas absorption HPWH simulation model is designed to
+accept mains temperature data in deg F.
 
 Current known issues:
 -None!
