@@ -264,6 +264,7 @@ NOx_Output = inputs.NOx_Output #ng/J, NOx production of the HP when active
 
 CO2_Output_Gas = 0.0053 #metric tons/therm, CO2 production when gas absorption heat pump is active
 CO2_Output_Electricity = 0.212115 #ton/MWh, CO2 production when the HPWH consumes electricity. Default value is the average used in California
+Coefficient_JacketLoss_WPerK = 2.638 #W/K, Default value from Paul Glanville on Oct 31, 2019
 #Calculating the NOx production rate of the HPWH when HP is active
 NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
 
