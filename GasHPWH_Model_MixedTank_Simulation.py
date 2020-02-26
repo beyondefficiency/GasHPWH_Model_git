@@ -221,8 +221,7 @@ class Inputs:
         self.ElectricityConsumption_Active = 110 #W, electricity consumed by the fan when the heat pump is running
         self.ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
         self.NOx_Output = 10 #ng/J, NOx production of the HP when active
-        CO2_Output_Gas = 0.0053 #metric tons/therm, CO2 production when gas absorption heat pump is active
-        CO2_Output_Electricity = 0.212115 #ton/MWh, CO2 production when the HPWH consumes electricity. Default value is the average used in California
+
         self.close_button = tk.Button(master, text="Next", command=master.quit)
         self.close_button.grid(row=17, column=2)
 
@@ -262,6 +261,9 @@ ElectricityConsumption_Active = inputs.ElectricityConsumption_Active #W, electri
 ElectricityConsumption_Idle = inputs.ElectricityConsumption_Idle #W, electricity consumed by the HPWH when idle
 NOx_Output = inputs.NOx_Output #ng/J, NOx production of the HP when active
 
+
+CO2_Output_Gas = 0.0053 #metric tons/therm, CO2 production when gas absorption heat pump is active
+CO2_Output_Electricity = 0.212115 #ton/MWh, CO2 production when the HPWH consumes electricity. Default value is the average used in California
 #Calculating the NOx production rate of the HPWH when HP is active
 NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
 
