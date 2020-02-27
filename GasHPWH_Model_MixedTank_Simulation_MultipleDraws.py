@@ -88,13 +88,20 @@ Constant_COP = 2.0341 #The constant in the COP equation
 
 #%%--------------------------USER INPUTS------------------------------------------
 
-#Draw profile description
-Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
-Version = 2019 #States the version of the T24 draw profile data set to use. Currently available options are 2016 and 2019
+#Draw profile description. These upper inputs should apply to every profile being run
+# example full draw profile file name:
+# “Bldg=Single_CZ=1_Wat=Hot_Prof=1_SDLM=Yes_CFA=800_Inc=FSCDB_Ver=2019.csv”
 WeatherSource = 'CA' #Type of weather file to use in the simulation. Currently only supports CA
-Water = 'Hot' #specify hot or mixed profile
-SDLM = 'Yes' #'Yes or No' dependig on what using
-Building_Type = 'Single' #Single or Multi depending on what using
+Water = 'Hot' #specify whether the input profile is hot water only or mixed water
+SDLM = 'Yes' #'Yes or No' depending on whether the Standard Distribution Loss Multiplier was used in the draw profiles
+Building_Type = 'Single' #Single or Multi depending on the building type of the draw profile being used
+Version = 2019 #States the version of the T24 draw profile data set to use. Currently, available options are 2016 and 2019
+
+Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
+
+runs_limit = None # enter None if no limit...if you would like to limit the number of draw profiles the script runs (maybe for testing of the script so it doesnt take too long - enter that here)
+vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
+
 #there are two available base paths to use in the next two lines. uncomment the format you want and use it
 Path_DrawProfile_Base_Path = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'Draw_Profiles'
 # Path_DrawProfile_Base_Path = '/Users/nathaniltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Draw Profiles'
@@ -104,9 +111,6 @@ output_prefix = 'OUTPUT_' #this will be appended to the beginning of each file r
 Path_Summary_Output = os.path.dirname(__file__) + os.sep + 'Output'
 Name_kWh_Summary_File = 'kWh_Usage_Summary_3.csv' #this file summarizes all the different profiles run
 Name_Therm_Summary_File = 'Therms_Usage_Summary_3.csv'  #this file summarizes all the different profiles run
-
-runs_limit = None # enter None if no limit...if you would like to limit the number of draw profiles the script runs (maybe for testing of the script so it doesnt take too long - enter that here)
-vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
 #COP regression calculations
