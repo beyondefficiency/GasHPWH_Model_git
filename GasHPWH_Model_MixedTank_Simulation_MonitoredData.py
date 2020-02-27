@@ -33,21 +33,7 @@ import time
 import GasHPWH_Model as GasHPWH
 from linetimer import CodeTimer
 
-#%%--------------------------INPUTS-------------------------------------------
-
-#These first two variables describe the data you're using to input your hot water draw profile. The first variable provides the path
-#to the data set itself. This means you should fill in the path with the specific location of your data file. Note that this
-#can be done directly on SharePoint, but it works much better if you sync the folder to your hard drive
-#The second variable states the source of the draw profile data. Right now the model is capable of handling CBECC-Res draw profiles,
-#generated using our scripts, and data from GTI's field study on these devices. 
-
-Path_DrawProfile = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'GTI' + os.sep + 'Calibration Dataset 1.0 for Frontier - Site 4 (May-June 2019) CONFIDENTIAL.csv'
-
-
-#Set this = 1 if you want to compare model predictions to measured data results. This is useful for model validation and error
-#checking. If you want to only input the draw profile and see what the data predicts, set this = 0. Note that =1 mode causes the
-#calculations to take much longer
-Compare_To_MeasuredData = 1
+#%%--------------------------GAS HPWH PARAMETERS------------------------------
 
 #These inputs are a series of constants describing the conditions of the simulation. Many of them are overwritten with measurements
 #if Compare_To_MeasuredData = 1. The constants describing the gas HPWH itself come from communications with Alex of GTI, and may
@@ -66,6 +52,25 @@ FiringRate_HeatPump = 2930.72*0.75 #W, heat consumed by the heat pump
 ElectricityConsumption_Active = 158.5 #W, electricity consumed by the fan when the heat pump is running
 ElectricityConsumption_Idle = 18 #W, electricity consumed by the HPWH when idle
 NOx_Output = 10 #ng/J, NOx production of the HP when active
+CO2_Output_Gas = 0.0053 #metric tons/therm, CO2 production when gas absorption heat pump is active
+CO2_Output_Electricity = 0.212115 #ton/MWh, CO2 production when the HPWH consumes electricity. Default value is the average used in California
+Coefficient_COP = -0.0025 #The coefficient in the COP equation
+Constant_COP = 2.0341 #The constant in the COP equation
+
+#%%--------------------------INPUTS-------------------------------------------
+
+#These first two variables describe the data you're using to input your hot water draw profile. The first variable provides the path
+#to the data set itself. This means you should fill in the path with the specific location of your data file. Note that this
+#can be done directly on SharePoint, but it works much better if you sync the folder to your hard drive
+#The second variable states the source of the draw profile data. Right now the model is capable of handling CBECC-Res draw profiles,
+#generated using our scripts, and data from GTI's field study on these devices. 
+
+Path_DrawProfile = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'GTI' + os.sep + 'Calibration Dataset 1.0 for Frontier - Site 4 (May-June 2019) CONFIDENTIAL.csv'
+
+#Set this = 1 if you want to compare model predictions to measured data results. This is useful for model validation and error
+#checking. If you want to only input the draw profile and see what the data predicts, set this = 0. Note that =1 mode causes the
+#calculations to take much longer
+Compare_To_MeasuredData = 1
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
 #Constants used in water-based calculations
@@ -80,6 +85,19 @@ W_To_BtuPerHour = 3.412142 #Converting from Watts to Btu/hr
 K_To_F_MagnitudeOnly = 1.8/1. #Converting from K/C to F. Only applicable for magnitudes, not actual temperatures (E.g. Yes for "A temperature difference of 10 C" but not for "The water temperature is 40 C")
 Btu_Per_CubicFoot_NaturalGas = 1015 #Energy density of natural gas, in Btu/ft^3
 Btu_Per_WattHour = 3.412142 #Conversion factor between Btu nad W-h
+Btu_In_Therm = 100000 #The number of Btus in a therm
+Pounds_In_MetricTon = 2204.62 #Pounds in a metric ton
+Pounds_In_Ton = 2000 #Pounds in a US ton
+kWh_In_MWh = 1000 #kWh in MWh
+
+#Calculating the NOx production rate of the HPWH when HP is active
+NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
+
+#Calculating the CO2 production when the heat pump is active
+CO2_Production_Rate_Gas = CO2_Output_Gas * FiringRate_HeatPump * W_To_BtuPerHour * (1/Minutes_In_Hour) * (1/Btu_In_Therm) * Pounds_In_MetricTon
+
+#Calculating the CO2 produced per kWh of electricity consumed
+CO_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton * kWh_In_MWh
 
 #Calculating the NOx production rate of the HPWH when HP is active
 NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
@@ -92,24 +110,25 @@ FiringRate_HeatPump = FiringRate_HeatPump * W_To_BtuPerHour #Btu/hr
 #Calculating the thermal mass of the water in the storage tank
 ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
 
-#Reading in the coefficients describing the COP of the gas HPWH as a function of the temperature of the water in the tank
-Coefficients_COP = np.fromfile(os.path.dirname(__file__) + os.sep + 'Coefficients' + os.sep + 'COP_Function_TReturn_F_6Nov2019.csv')
-
 #Stores the parameters in a list for use in the modelParameters = [Coefficient_JacketLoss, Power_Backup, Threshold_Activation_Backup, Threshold_Deactivation_Backup, FiringRate_HeatPump, Temperature_Tank_Set, Temperature_Tank_Set_Deadband, ThermalMass_Tank, ElectricityConsumption_Active, ElectricityConsumption_Idle, NOx_Production_Rate]
-Parameters = [Coefficient_JacketLoss,
-                Power_Backup,
-                Threshold_Activation_Backup,
-                Threshold_Deactivation_Backup,
-                FiringRate_HeatPump,
-                Temperature_Tank_Set,
-                Temperature_Tank_Set_Deadband,
-                ThermalMass_Tank,
-                ElectricityConsumption_Active,
-                ElectricityConsumption_Idle,
-                NOx_Production_Rate]
+Parameters = [Coefficient_JacketLoss, #0
+                Power_Backup, #1
+                Threshold_Activation_Backup, #2
+                Threshold_Deactivation_Backup, #3
+                FiringRate_HeatPump, #4
+                Temperature_Tank_Set, #5
+                Temperature_Tank_Set_Deadband, #6
+                ThermalMass_Tank, #7
+                ElectricityConsumption_Active, #8
+                ElectricityConsumption_Idle, #9
+                NOx_Production_Rate, #10
+                CO2_Production_Rate_Gas, #11
+                CO_Production_Rate_Electricity] #12
+
 #%%--------------------------MODELING-----------------------------------------
 
 #Creates a 1 dimensional regression stating the COP of the gas heat pump as a function of the temperature of water in the tank
+Coefficients_COP = [Coefficient_COP, Constant_COP] #combines the coefficient and the constant into an array
 Regression_COP = np.poly1d(Coefficients_COP)
 
 #This section of the code creates a data frame that can be used to represent the simulation model
