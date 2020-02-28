@@ -59,12 +59,8 @@ Constant_COP = 2.0341 #The constant in the COP equation
 
 #%%--------------------------INPUTS-------------------------------------------
 
-#These first two variables describe the data you're using to input your hot water draw profile. The first variable provides the path
-#to the data set itself. This means you should fill in the path with the specific location of your data file. Note that this
-#can be done directly on SharePoint, but it works much better if you sync the folder to your hard drive
-#The second variable states the source of the draw profile data. Right now the model is capable of handling CBECC-Res draw profiles,
-#generated using our scripts, and data from GTI's field study on these devices. 
-
+#This first variable provides the path to the data set itself. This means you should fill in the path with the specific location 
+#of your data file. Note that this works best if the file is on your hard drive, not a shared network drive
 Path_DrawProfile = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'GTI' + os.sep + 'Calibration Dataset 1.0 for Frontier - Site 4 (May-June 2019) CONFIDENTIAL.csv'
 
 #Set this = 1 if you want to compare model predictions to measured data results. This is useful for model validation and error
@@ -280,22 +276,12 @@ if Compare_To_MeasuredData == 1:
     p7.line(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Energy Added Heat Pump, Model (Btu)'], legend = 'Model', color = 'red')
     p7.circle(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Energy Added Heat Pump, Data (Btu)'], legend = 'Data', color = 'blue')
 
-    p8 = figure(width=1600, height= 400, x_axis_label='Time (min)', y_axis_label = 'Energy Added Heat Pump (Btu/min)')
+    p8 = figure(width=1600, height= 400, x_axis_label='Time (min)', y_axis_label = 'Electricity Consumed (W-h)')
     p8.title.text_font_size = '12pt'
-    p8.line(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Energy Added Heat Pump (Btu/min)'], legend = 'Model', color = 'red')
-    p8.circle(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Energy Added Heat Pump, Data (Btu/min)'], legend = 'Data', color = 'blue')
+    p8.line(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Electricity Consumed, Model (W-h)'], legend = 'Model', color = 'red')
+    p8.circle(x = Compare_To_MeasuredData['Time (min)'], y = Draw_Profile['Power Draw'] - Draw_Profile['Power Draw'].iloc[0], legend = 'Data', color = 'blue')
 
-    p9 = figure(width=1600, height= 400, x_axis_label='Time (min)', y_axis_label = 'Timesteps (min)')
-    p9.title.text_font_size = '12pt'
-    p9.line(x = Compare_To_MeasuredData['Time (min)'], y = Model['Timestep (min)'], legend = 'Model', color = 'red')
-    p9.circle(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Timestep (min)'], legend = 'Data', color = 'blue')
-
-    p10 = figure(width=1600, height= 400, x_axis_label='Time (min)', y_axis_label = 'Electricity Consumed (W-h)')
-    p10.title.text_font_size = '12pt'
-    p10.line(x = Compare_To_MeasuredData['Time (min)'], y = Compare_To_MeasuredData['Electricity Consumed, Model (W-h)'], legend = 'Model', color = 'red')
-    p10.circle(x = Compare_To_MeasuredData['Time (min)'], y = Draw_Profile['Power Draw'] - Draw_Profile['Power Draw'].iloc[0], legend = 'Data', color = 'blue')
-
-    p = gridplot([[p1],[p2], [p3], [p4], [p5], [p6], [p7], [p8], [p9], [p10]])
+    p = gridplot([[p1],[p2], [p3], [p4], [p5], [p6], [p7], [p8]])
     output_file(os.path.dirname(__file__) + os.sep + 'Validation Data\Validation Plots.html', title = 'Validation Data')
     save(p)
 
