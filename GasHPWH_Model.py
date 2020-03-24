@@ -13,6 +13,7 @@ for different assumptions as needed, creating a library of relevant simulation m
 
 import numpy as np
 import pandas as pd
+import math
 
 Minutes_In_Hour = 60 #Conversion between hours and minutes
 SpecificHeat_Water = 0.998 #Btu/(lb_m-F) @ 80 deg F, http://www.engineeringtoolbox.com/water-properties-d_1508.html
@@ -21,8 +22,12 @@ kWh_In_Wh = 1/1000 #Conversion from Wh to kWh
 
 def Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP):
 
+    
+    
     data = Model.to_numpy() #convert the dataframe to a numpy array for EXTREME SPEED!!!! (numpy opperates in C)
     col_indx = dict(zip(Model.columns, list(range(0,len(Model.columns))))) #create a dictionary to provide column index references while using numpy in following loop
+    
+    data[0, col_indx['Electricity CO2 Multiplier (lb/kWh)']] = Parameters[12][data[0, col_indx['Hour of Year (hr)']]]
 
     for i  in range(1, len(data)): #Perform the modeling calculations for each row in the index
         # 1- Calculate the jacket losses through the walls of the tank in Btu:
@@ -45,6 +50,7 @@ def Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP):
         # 5 - Calculate the energy change in the tank during the previous timestep
         data[i, col_indx['Total Energy Change (Btu)']] = data[i, col_indx['Jacket Losses (Btu)']] + data[i, col_indx['Energy Withdrawn (Btu)']] + data[i, col_indx['Energy Added Backup (Btu)']] + data[i, col_indx['Energy Added Heat Pump (Btu)']]
         # 6 - #Calculate the tank temperature during the final time step
+        data[i, col_indx['Electricity CO2 Multiplier (lb/kWh)']] = Parameters[12][data[i, col_indx['Hour of Year (hr)']]]
         if i < len(data) - 1:
             data[i + 1, col_indx['Tank Temperature (deg F)']] = data[i, col_indx['Total Energy Change (Btu)']] / (Parameters[7]) + data[i, col_indx['Tank Temperature (deg F)']]
             
@@ -55,7 +61,9 @@ def Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP):
     Model['Electric Usage (W-hrs)'] = Model['Elec Energy Demand (Watts)'] * Model['Timestep (min)']/60 + (Model['Energy Added Backup (Btu)']/3.413)
     Model['Gas Usage (Btu)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Energy Added Heat Pump (Btu)'] / Model['COP Gas'],0)
     Model['NOx Production (ng)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Timestep (min)'] * Parameters[10], 0)
-    Model['CO2 Production (lb)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Timestep (min)'] * Parameters[11], 0) + Model['Electric Usage (W-hrs)'] * kWh_In_Wh * Parameters[12]
+    Model['CO2 Production Gas (lb)'] = np.where(Model['Energy Added Heat Pump (Btu)'] > 0, Model['Timestep (min)'] * Parameters[11], 0)
+    Model['CO2 Production Elec (lb)'] =  Model['Electric Usage (W-hrs)'] * kWh_In_Wh * Model['Electricity CO2 Multiplier (lb/kWh)']
+    Model['CO2 Production (lb)'] = Model['CO2 Production Gas (lb)'] + Model['CO2 Production Elec (lb)']
     Model['Energy Added Total (Btu)'] = Model['Energy Added Heat Pump (Btu)'] + Model['Energy Added Backup (Btu)'] #Calculate the total energy added to the tank during this timestep
     Model['Energy Added Heat Pump (Btu/min)'] = Parameters[4] * Regression_COP(Model['Tank Temperature (deg F)'])/ Minutes_In_Hour * (Model['Energy Added Heat Pump (Btu)'] > 0)    
     

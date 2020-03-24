@@ -71,7 +71,7 @@ ST = time.time() #begin to time the script
 #and may need to be updated if he sends new values
 Temperature_Tank_Initial = 115 #Deg F, initial temperature of water in the storage tank. 115 F is the standard set temperature in CBECC
 Temperature_Tank_Set = 115 #Deg F, set temperature of the HPWH. 115 F is the standard set temperature in CBECC
-Temperature_Tank_Set_Deadband = 15 #Deg F, deadband on the thermostat based on e-mail from Paul Glanville on Oct 31, 2019
+Temperature_Tank_Set_Deadband = 10 #Deg F, deadband on the thermostat based on e-mail from Paul Glanville on Oct 31, 2019
 Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation
 Temperature_Ambient = 68 #deg F, temperature of the ambient air, placeholder for now
 Volume_Tank = 65 #gal, volume of water held in the storage tank
@@ -151,7 +151,7 @@ NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
 CO2_Production_Rate_Gas = CO2_Output_Gas * FiringRate_HeatPump * W_To_BtuPerHour * (1/Minutes_In_Hour) * (1/Btu_In_Therm) * Pounds_In_MetricTon
 
 #Calculating the CO2 produced per kWh of electricity consumed
-CO2_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton * kWh_In_MWh
+CO2_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton / kWh_In_MWh
 if Vary_CO2_Elec == True:
     CO2_Production_Rate_Electricity = CO2_Production_Rate_Electricity.rename_axis('CZ' + str(ClimateZone) + 'Electricity Long-Run Carbon Emission Factors (lb/kWh)')
 
@@ -258,6 +258,8 @@ Model['COP Gas'] = 0
 Model['Total Energy Change (Btu)'] = 0
 Model['Timestep (min)'] = Timestep
 Model['CO2 Production (lb)'] = 0
+Model['Hour of Year (hr)'] = (Model['Time (min)']/60).astype(int)
+Model['Electricity CO2 Multiplier (lb/kWh)'] = 0
 
 #The following code simulates the performance of the gas HPWH
 Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
