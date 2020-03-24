@@ -117,12 +117,12 @@ Path_DrawProfile_Output_Base_Path = os.path.dirname(__file__) + os.sep + 'Output
 Path_DrawProfile_Output_File_Name = 'Output_' + Path_DrawProfile_File_Name #Save the file with Output_ followed by the name of the draw profile
 Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
 
-if Vary_CO2_Elec == True:
+if Vary_CO2_Elec == True: #If the user has elected to use time-varying CO2 multipliers this code will read the data set, identify the desired data, create a new data series containing the hourly multipliers for this simulation
     Folder_CO2_Elec = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'CO2' #Specify the folder where the electric CO2 data is located
     File_CO2_Elec = r'CA2019CarbonOnly-Elec.csv' #Specify the file containing the CO2 data
-    CO2_Elec = pd.read_csv(Folder_CO2_Elec + os.sep +  File_CO2_Elec, header = 2)
-    CO2_Column = 'CZ' + str(ClimateZone) + ' Electricity Long-Run Carbon Emission Factors (ton/MWh)'
-    CO2_Output_Electricity = CO2_Elec[CO2_Column]
+    CO2_Elec = pd.read_csv(Folder_CO2_Elec + os.sep +  File_CO2_Elec, header = 2) #Read the specified data file. The header declaration is specific to the current file, and may need to be changed when using different files
+    CO2_Column = 'CZ' + str(ClimateZone) + ' Electricity Long-Run Carbon Emission Factors (ton/MWh)' #Find the column name of CO2 cmultipliers for the currently used climate zone. This line will likely need to be changed if using a different file
+    CO2_Output_Electricity = CO2_Elec[CO2_Column] #Create a new series holding the data for use
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
 #COP regression calculations
