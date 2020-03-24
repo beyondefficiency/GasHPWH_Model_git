@@ -13,7 +13,6 @@ for different assumptions as needed, creating a library of relevant simulation m
 
 import numpy as np
 import pandas as pd
-import math
 
 Minutes_In_Hour = 60 #Conversion between hours and minutes
 SpecificHeat_Water = 0.998 #Btu/(lb_m-F) @ 80 deg F, http://www.engineeringtoolbox.com/water-properties-d_1508.html
@@ -22,8 +21,6 @@ kWh_In_Wh = 1/1000 #Conversion from Wh to kWh
 
 def Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP):
 
-    
-    
     data = Model.to_numpy() #convert the dataframe to a numpy array for EXTREME SPEED!!!! (numpy opperates in C)
     col_indx = dict(zip(Model.columns, list(range(0,len(Model.columns))))) #create a dictionary to provide column index references while using numpy in following loop
     

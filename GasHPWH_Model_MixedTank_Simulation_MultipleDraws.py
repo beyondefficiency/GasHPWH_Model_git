@@ -101,6 +101,7 @@ Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
 
 runs_limit = None # enter None if no limit...if you would like to limit the number of draw profiles the script runs (maybe for testing of the script so it doesnt take too long - enter that here)
 vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
+Vary_CO2_Elec = True #Enter True is reading the CO2 multipliers from a data file, enter False if using the CO2 multiplier specified above
 
 #there are two available base paths to use in the next two lines. uncomment the format you want and use it
 Path_DrawProfile_Base_Path = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'Draw_Profiles'
@@ -111,6 +112,13 @@ output_prefix = 'OUTPUT_' #this will be appended to the beginning of each file r
 Path_Summary_Output = os.path.dirname(__file__) + os.sep + 'Output'
 Name_kWh_Summary_File = 'kWh_Usage_Summary_3.csv' #this file summarizes all the different profiles run
 Name_Therm_Summary_File = 'Therms_Usage_Summary_3.csv'  #this file summarizes all the different profiles run
+
+if Vary_CO2_Elec == True: #If the user has elected to use time-varying CO2 multipliers this code will read the data set, identify the desired data, create a new data series containing the hourly multipliers for this simulation
+    Folder_CO2_Elec = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'CO2' #Specify the folder where the electric CO2 data is located
+    File_CO2_Elec = r'CA2019CarbonOnly-Elec.csv' #Specify the file containing the CO2 data
+    CO2_Elec = pd.read_csv(Folder_CO2_Elec + os.sep +  File_CO2_Elec, header = 2) #Read the specified data file. The header declaration is specific to the current file, and may need to be changed when using different files
+    CO2_Column = 'CZ' + str(ClimateZone) + ' Electricity Long-Run Carbon Emission Factors (ton/MWh)' #Find the column name of CO2 cmultipliers for the currently used climate zone. This line will likely need to be changed if using a different file
+    CO2_Output_Electricity = CO2_Elec[CO2_Column] #Create a new series holding the data for use
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
 #COP regression calculations
@@ -140,6 +148,8 @@ CO2_Production_Rate_Gas = CO2_Output_Gas * FiringRate_HeatPump * W_To_BtuPerHour
 
 #Calculating the CO2 produced per kWh of electricity consumed
 CO_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton * kWh_In_MWh
+if Vary_CO2_Elec == True:
+    CO2_Production_Rate_Electricity = CO2_Production_Rate_Electricity.rename_axis('CZ' + str(ClimateZone) + 'Electricity Long-Run Carbon Emission Factors (lb/kWh)')
 
 #Converting quantities from SI units provided by Alex to (Incorrect, silly, obnoxious) IP units
 Coefficient_JacketLoss = Coefficient_JacketLoss * W_To_BtuPerHour * K_To_F_MagnitudeOnly #Converts Coefficient_JacketLoss from W/K to Btu/hr-F
@@ -294,6 +304,8 @@ for current_profile in All_Variable_Dicts:
         Model['Total Energy Change (Btu)'] = 0
         Model['Timestep (min)'] = Timestep
         Model['CO2 Production (lb)'] = 0
+        Model['Hour of Year (hr)'] = (Model['Time (min)']/60).astype(int)
+        Model['Electricity CO2 Multiplier (lb/kWh)'] = 0
 
         Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
 
