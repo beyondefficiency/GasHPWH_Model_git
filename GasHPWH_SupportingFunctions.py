@@ -39,6 +39,14 @@ to the results for Chicago available in the E+ documentation This function only
 works in IP units as the gas absorption HPWH simulation model is designed to
 accept mains temperature data in deg F.
 
+The third function converts an E+ Date/Time column to datetime format. It
+requires an E+ data file as the input and returns the Date/Time column in
+datetime format (Instead of string format). The most efficient way to use
+this function is to set the output of the function to the Date/Time column of
+your file, both converting and saving it in a single step. This function was
+created by Clayton Miller at NUS and can be found at 
+https://nbviewer.jupyter.org/github/cmiller8/PythonforBuildingAnalysts/blob/master/2_AnalyzingEnergyPlusOutputFile/EnergyPlusOutFileAnalysis.ipynb#We-need-to-convert-24:00:00-to-00:00:00-for-it-to-play-nice-with-Pandas
+
 Current known issues:
 -None!
 
@@ -50,6 +58,9 @@ Current known issues:
 import pandas as pd
 import math
 import numpy as np
+import datetime
+from datetime import timedelta
+import time
 
 #%%--------------------DEFINE FUNCTIONS-------------------------------------
 
@@ -113,3 +124,27 @@ def Temperature_Mains_EnergyPlus(Data): #Replicate the mains temperature calcula
     Data['Hour of Year (hr)'] = Data.index #Add a new column representing the hour of the year for each row
     
     return Data
+
+def eplustimestamp(simdata):
+    timestampdict={}
+    for i,row in simdata.T.iteritems():
+        timestamp = str(2013) + row['Date/Time']
+        try:
+            timestampdict[i] = datetime.datetime.strptime(timestamp,'%Y %m/%d  %H:%M:%S')
+        except ValueError:
+            tempts = timestamp.replace(' 24', ' 23')
+            timestampdict[i] = datetime.datetime.strptime(tempts,'%Y %m/%d  %H:%M:%S')
+            timestampdict[i] += timedelta(hours=1)
+    timestampseries = pd.Series(timestampdict)
+    return timestampseries
+
+def Convert_EPlus_Output(Simulation_Data):
+    Simulation_Data['Date/Time'] = eplustimestamp(Simulation_Data)
+    Simulation_Data['Time (hr)'] = Simulation_Data['Date/Time'].dt.hour
+
+    Simulation_Data['Timestep (min)'] = (Simulation_Data['Time (hr)'] - Simulation_Data['Time (hr)'].shift()).fillna(0) * 60
+    Simulation_Data.loc[Simulation_Data['Time (hr)'] == 0, 'Timestep (min)'] = (24 - Simulation_Data['Time (hr)'].shift()) * 60
+
+    Simulation_Data['Time (min)'] = Simulation_Data['Timestep (min)'].cumsum()
+    
+    return Simulation_Data
