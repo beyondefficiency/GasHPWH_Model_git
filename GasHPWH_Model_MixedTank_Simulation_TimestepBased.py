@@ -92,12 +92,14 @@ Constant_COP = 2.0341 #The constant in the COP equation
 #%%--------------------------USER INPUTS------------------------------------------
 #This first variable provides the path to the data set itself. This means you should fill in the path with the specific location 
 #of your data file. Note that this works best if the file is on your hard drive, not a shared network drive
-Folder_DrawProfile = r'C:\Users\Peter Grant\Dropbox (Beyond Efficiency)\Peter\Python Scripts\GasHPWH_Model_git\Data\E+'
-Filename_DrawProfile = 'eplusout.csv'
-Path_DrawProfile = Folder_DrawProfile + os.sep + Filename_DrawProfile
+Folder_EPlusOutputData = r'C:\Users\Peter Grant\Dropbox (Beyond Efficiency)\Peter\Python Scripts\GasHPWH_Model_git\Data\E+'
+Filename_EPlusOutputData = 'AsBuilt_NewBerlin_HPWH data.csv'
+Path_SimulationData = Folder_EPlusOutputData + os.sep + Filename_EPlusOutputData
+Filename_WeatherFile = 'USA_WI_Milwaukee-Mitchell.Intl.AP.726400_TMY3.epw'
+Path_WeatherData = Folder_EPlusOutputData + os.sep + Filename_WeatherFile
 
 Path_DrawProfile_Output_Base_Path = os.path.dirname(__file__) + os.sep + 'Output'
-Path_DrawProfile_Output_File_Name = 'Output_' + Filename_DrawProfile #Save the file with Output_ followed by the name of the draw profile
+Path_DrawProfile_Output_File_Name = 'Output_' + Filename_EPlusOutputData #Save the file with Output_ followed by the name of the draw profile
 Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
 
 vary_inlet_temp = False # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
@@ -129,7 +131,10 @@ NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
 CO2_Production_Rate_Gas = CO2_Output_Gas * FiringRate_HeatPump * W_To_BtuPerHour * (1/Minutes_In_Hour) * (1/Btu_In_Therm) * Pounds_In_MetricTon
 
 #Calculating the CO2 produced per kWh of electricity consumed
-CO_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton * kWh_In_MWh
+CO2_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton / kWh_In_MWh
+CO2_Production_Rate_Electricity = pd.Series(data = CO2_Production_Rate_Electricity)
+CO2_Production_Rate_Electricity = CO2_Production_Rate_Electricity.repeat(8760)
+CO2_Production_Rate_Electricity.reset_index(inplace = True, drop = True)
 
 #Converting quantities from SI units provided by Alex to (Incorrect, silly, obnoxious) IP units
 Coefficient_JacketLoss = Coefficient_JacketLoss_WPerK * W_To_BtuPerHour / K_To_F_MagnitudeOnly #Converts Coefficient_JacketLoss from W/K to Btu/hr-F
@@ -152,7 +157,7 @@ Parameters = [Coefficient_JacketLoss, #0
                 ElectricityConsumption_Idle, #9
                 NOx_Production_Rate, #10
                 CO2_Production_Rate_Gas, #11
-                CO_Production_Rate_Electricity] #12
+                CO2_Production_Rate_Electricity] #12
 
 #%%--------------------------MODELING-----------------------------------------
 
@@ -160,7 +165,7 @@ Parameters = [Coefficient_JacketLoss, #0
 #The first step is putting the draw profile data into the right format (E.g. If it's CBECC data,
 # we need to convert from event-based to timestep-based)
 
-Draw_Profile = pd.read_csv(Path_DrawProfile) #Create a data frame called Draw_Profile containing the CBECC-Res information
+Draw_Profile =  GasHPWH_Support.Convert_EPlus_Output(Path_SimulationData, Path_WeatherData, 'IP')
 
 #Converts the Date/Time column in the draw profile from a string to Date/Time
 #Draw_Profile['Date/Time'] = GasHPWH_Support.eplustimestamp(Draw_Profile)
@@ -231,7 +236,7 @@ if vary_inlet_temp == False:
 #else: #(vary_inlet_temp == False)
 #    Model['Inlet Water Temperature (deg F)'] = Temperature_Water_Inlet #Sets the inlet temperature in the model equal to the value specified in INPUTS. This value could be replaced with a series of value
 
-Model = Draw_Profile[['Timestep (min)', 'Time (min)', 'Inlet Water Temperature (deg F)', 'Hot Water Draw Volume (gal)']].copy()
+Model = Draw_Profile[['Hour of Year (hr)', 'Timestep (min)', 'Time (min)', 'Inlet Water Temperature (deg F)', 'Hot Water Draw Volume (gal)']].copy()
 
 Model['Ambient Temperature (deg F)'] = Temperature_Ambient #Sets the ambient temperature in the model equal to the value specified in INPUTS. This value could be replaced with a series of values
 
@@ -246,6 +251,7 @@ Model['Energy Added Heat Pump (Btu)'] = 0
 Model['Energy Added Total (Btu)'] = 0
 Model['COP Gas'] = 0
 Model['Total Energy Change (Btu)'] = 0
+Model['Electricity CO2 Multiplier (lb/kWh)'] = 0
 Model['CO2 Production (lb)'] = 0
 
 #Calculates the timestep used in the draw profile and fills ou the 'Timestep (min)' column accordingly

@@ -138,7 +138,10 @@ def eplustimestamp(simdata):
     timestampseries = pd.Series(timestampdict)
     return timestampseries
 
-def Convert_EPlus_Output(Simulation_Data):
+def Convert_EPlus_Output(Simulation_Data_Path, Weather_Data_Path, Units):
+    Weather_Data = EnergyPlus_Weather_Reader(Weather_Data_Path, Units)
+    
+    Simulation_Data = pd.read_csv(Simulation_Data_Path)
     Simulation_Data['Date/Time'] = eplustimestamp(Simulation_Data)
     Simulation_Data['Time (hr)'] = Simulation_Data['Date/Time'].dt.hour
 
@@ -146,5 +149,21 @@ def Convert_EPlus_Output(Simulation_Data):
     Simulation_Data.loc[Simulation_Data['Time (hr)'] == 0, 'Timestep (min)'] = (24 - Simulation_Data['Time (hr)'].shift()) * 60
 
     Simulation_Data['Time (min)'] = Simulation_Data['Timestep (min)'].cumsum()
+    Simulation_Data['Hour of Year (hr)'] = (Simulation_Data['Time (min)'] / 60).astype(int)
+
+    Simulation_Data['Inlet Water Temperature (deg F)'] = Temperature_Mains_EnergyPlus(Weather_Data)['Mains Water Temperature (deg F)']
     
-    return Simulation_Data
+    Density_Water = 8.3176 #lb-m/gal @ 80 deg F, http://www.engineeringtoolbox.com/water-density-specific-weight-d_595.html
+    Pounds_In_Kilogram = 2.20462 #The number of pounds in a kilogram (Unit conversion)
+    Seconds_In_Minute = 60 #The number of seconds in a minute (Unit conversion)
+    
+    Simulation_Data['Hot Water Draw Volume (gal)'] = Simulation_Data['WATER HEATER_1:Water Heater Use Side Mass Flow Rate [kg/s](Hourly)'] * Seconds_In_Minute * Pounds_In_Kilogram / Density_Water * Simulation_Data['Timestep (min)']
+    
+    Simulation_Data_Output = pd.DataFrame()
+    Simulation_Data_Output['Hour of Year (hr)'] = Simulation_Data['Hour of Year (hr)']
+    Simulation_Data_Output['Time (min)'] = Simulation_Data['Time (min)']
+    Simulation_Data_Output['Timestep (min)'] = Simulation_Data['Timestep (min)']
+    Simulation_Data_Output['Inlet Water Temperature (deg F)'] = Simulation_Data['Inlet Water Temperature (deg F)']
+    Simulation_Data_Output['Hot Water Draw Volume (gal)'] = Simulation_Data['Hot Water Draw Volume (gal)']
+    
+    return Simulation_Data_Output

@@ -155,6 +155,10 @@ CO2_Production_Rate_Gas = CO2_Output_Gas * FiringRate_HeatPump * W_To_BtuPerHour
 CO2_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton / kWh_In_MWh
 if Vary_CO2_Elec == True:
     CO2_Production_Rate_Electricity = CO2_Production_Rate_Electricity.rename_axis('CZ' + str(ClimateZone) + 'Electricity Long-Run Carbon Emission Factors (lb/kWh)')
+else:
+    CO2_Production_Rate_Electricity = pd.Series(data = CO2_Production_Rate_Electricity)
+    CO2_Production_Rate_Electricity.repeat(8760)
+    CO2_Production_Rate_Electricity.reset_index(inplace = True, drop = True)
 
 #Converting quantities from SI units provided by Alex to (Incorrect, silly, obnoxious) IP units
 Coefficient_JacketLoss = Coefficient_JacketLoss * W_To_BtuPerHour * K_To_F_MagnitudeOnly #Converts Coefficient_JacketLoss from W/K to Btu/hr-F
