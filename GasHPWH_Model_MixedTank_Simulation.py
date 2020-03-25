@@ -75,7 +75,7 @@ Temperature_Tank_Set_Deadband = 10 #Deg F, deadband on the thermostat based on e
 Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation
 Temperature_Ambient = 68 #deg F, temperature of the ambient air, placeholder for now
 Volume_Tank = 65 #gal, volume of water held in the storage tank
-Coefficient_JacketLoss_WPerK = 2.638 #W/K, Default value from Paul Glanville on Oct 31, 2019
+Coefficient_JacketLoss = 2.638 #W/K, Default value from Paul Glanville on Oct 31, 2019
 Power_Backup = 1250 #W, electricity consumption of the backup resistance elements
 Threshold_Activation_Backup = 95 #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
 Threshold_Deactivation_Backup = 105 #Deg F, sets the temperature when the backup element disengages after it has been engaged
@@ -114,7 +114,7 @@ Path_DrawProfile = Path_DrawProfile_Base_Path + os.sep + Path_DrawProfile_File_N
 
 # Path_DrawProfile_Base_Output_Path = '/Users/nathanieliltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Individual Outputs of Simulation Model'
 Path_DrawProfile_Output_Base_Path = os.path.dirname(__file__) + os.sep + 'Output'
-Path_DrawProfile_Output_File_Name = 'Output_' + Path_DrawProfile_File_Name #Save the file with Output_ followed by the name of the draw profile
+Path_DrawProfile_Output_File_Name = 'Outputsimple_' + Path_DrawProfile_File_Name #Save the file with Output_ followed by the name of the draw profile
 Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
 
 if Vary_CO2_Elec == True: #If the user has elected to use time-varying CO2 multipliers this code will read the data set, identify the desired data, create a new data series containing the hourly multipliers for this simulation
@@ -151,12 +151,13 @@ NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
 CO2_Production_Rate_Gas = CO2_Output_Gas * FiringRate_HeatPump * W_To_BtuPerHour * (1/Minutes_In_Hour) * (1/Btu_In_Therm) * Pounds_In_MetricTon
 
 #Calculating the CO2 produced per kWh of electricity consumed
+#note that this object becomes a float if Vary_C02_Elec == False but is a dataframe series if it is
 CO2_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton / kWh_In_MWh
 if Vary_CO2_Elec == True:
     CO2_Production_Rate_Electricity = CO2_Production_Rate_Electricity.rename_axis('CZ' + str(ClimateZone) + 'Electricity Long-Run Carbon Emission Factors (lb/kWh)')
 
 #Converting quantities from SI units provided by Alex to (Incorrect, silly, obnoxious) IP units
-Coefficient_JacketLoss = Coefficient_JacketLoss_WPerK * W_To_BtuPerHour / K_To_F_MagnitudeOnly #Converts Coefficient_JacketLoss from W/K to Btu/hr-F
+Coefficient_JacketLoss = Coefficient_JacketLoss * W_To_BtuPerHour * K_To_F_MagnitudeOnly #Converts Coefficient_JacketLoss from W/K to Btu/hr-F
 Power_Backup = Power_Backup * W_To_BtuPerHour #Btu/hr
 FiringRate_HeatPump = FiringRate_HeatPump * W_To_BtuPerHour #Btu/hr
 

@@ -69,7 +69,7 @@ Start_Time = time.time() #begin to time the script
 # #need to be updated if he sends new values
 Temperature_Tank_Initial = 115 #Deg F, initial temperature of water in the storage tank. 115 F is the standard set temperature in CBECC
 Temperature_Tank_Set = 115 #Deg F, set temperature of the HPWH. 115 F is the standard set temperature in CBECC
-Temperature_Tank_Set_Deadband = 15 #Deg F, deadband on the thermostat based on e-mail from Paul Glanville on Oct 31, 2019
+Temperature_Tank_Set_Deadband = 10 #Deg F, deadband on the thermostat based on e-mail from Paul Glanville on Oct 31, 2019
 Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation
 Temperature_Ambient = 68 #deg F, temperature of the ambient air, placeholder for now
 Volume_Tank = 65 #gal, volume of water held in the storage tank
@@ -107,7 +107,7 @@ Vary_CO2_Elec = True #Enter True is reading the CO2 multipliers from a data file
 Path_DrawProfile_Base_Path = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'Draw_Profiles'
 # Path_DrawProfile_Base_Path = '/Users/nathaniltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Draw Profiles'
 Path_DrawProfile_Base_Output_Path = os.path.dirname(__file__) + os.sep + 'Output'
-output_prefix = 'OUTPUT_' #this will be appended to the beginning of each file run when saving the final individual results
+output_prefix = 'OUTPUTCOMPLEX_' #this will be appended to the beginning of each file run when saving the final individual results
 # Path_DrawProfile_Base_Output_Path = '/Users/nathaniltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Individual Outputs of Simulation Model'
 Path_Summary_Output = os.path.dirname(__file__) + os.sep + 'Output'
 Name_kWh_Summary_File = 'kWh_Usage_Summary_3.csv' #this file summarizes all the different profiles run
@@ -117,8 +117,7 @@ if Vary_CO2_Elec == True: #If the user has elected to use time-varying CO2 multi
     Folder_CO2_Elec = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'CO2' #Specify the folder where the electric CO2 data is located
     File_CO2_Elec = r'CA2019CarbonOnly-Elec.csv' #Specify the file containing the CO2 data
     CO2_Elec = pd.read_csv(Folder_CO2_Elec + os.sep +  File_CO2_Elec, header = 2) #Read the specified data file. The header declaration is specific to the current file, and may need to be changed when using different files
-    CO2_Column = 'CZ' + str(ClimateZone) + ' Electricity Long-Run Carbon Emission Factors (ton/MWh)' #Find the column name of CO2 cmultipliers for the currently used climate zone. This line will likely need to be changed if using a different file
-    CO2_Output_Electricity = CO2_Elec[CO2_Column] #Create a new series holding the data for use
+    CO2_Column_Title_Format = 'CZ' + '[insert climate zone]' + ' Electricity Long-Run Carbon Emission Factors (ton/MWh)'  #This line will likely need to be changed if using a different file
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
 #COP regression calculations
@@ -147,9 +146,8 @@ NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
 CO2_Production_Rate_Gas = CO2_Output_Gas * FiringRate_HeatPump * W_To_BtuPerHour * (1/Minutes_In_Hour) * (1/Btu_In_Therm) * Pounds_In_MetricTon
 
 #Calculating the CO2 produced per kWh of electricity consumed
-CO_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton * kWh_In_MWh
-if Vary_CO2_Elec == True:
-    CO2_Production_Rate_Electricity = CO2_Production_Rate_Electricity.rename_axis('CZ' + str(ClimateZone) + 'Electricity Long-Run Carbon Emission Factors (lb/kWh)')
+#note that this object becomes a float if Vary_C02_Elec == False but is a dataframe series if it is True
+CO2_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton / kWh_In_MWh #if not varying CO2 rates
 
 #Converting quantities from SI units provided by Alex to (Incorrect, silly, obnoxious) IP units
 Coefficient_JacketLoss = Coefficient_JacketLoss * W_To_BtuPerHour * K_To_F_MagnitudeOnly #Converts Coefficient_JacketLoss from W/K to Btu/hr-F
@@ -172,7 +170,7 @@ Parameters = [Coefficient_JacketLoss, #0
                 ElectricityConsumption_Idle, #9
                 NOx_Production_Rate, #10
                 CO2_Production_Rate_Gas, #11
-                CO_Production_Rate_Electricity] #12
+                CO2_Production_Rate_Electricity] #12
 
 #%%--------------------------DATA STRUCTURES DEPENDENT ON USER INPUTS------------------------------------------
 
@@ -232,6 +230,7 @@ for current_profile in All_Variable_Dicts:
         # we need to convert from event-based to timestep-based)
 
         Draw_Profile = pd.read_csv(Path_DrawProfile) #Create a data frame called Draw_Profile containing the CBECC-Res information
+
         Draw_Profile['Day of Year (Day)'] = Draw_Profile['Day of Year (Day)'].astype(int) #make sure the days are in integer format, not float, as a sanity check on work below
         Unique_Days = Draw_Profile['Day of Year (Day)'].unique() #Identifies the number of unique days included in the draw profile
         Continuous_Index_Range_of_Days = range(Draw_Profile['Day of Year (Day)'].min(), Draw_Profile['Day of Year (Day)'].max() + 1)
@@ -241,6 +240,7 @@ for current_profile in All_Variable_Dicts:
         Index_Model= int(len(Continuous_Index_Range_of_Days) * Hours_In_Day * Minutes_In_Hour / Timestep) #Identifies the number of timestep bins covered in the draw profile
         Model = pd.DataFrame(index = range(Index_Model)) #Creates a data frame with 1 row for each bin in the draw profile
         Model['Time (min)'] = Model.index * Timestep #Create a column in the data frame giving the time at the beginning of each timestep bin
+
         Model['Hot Water Draw Volume (gal)'] = 0 #Set the default data for hot water draw volume in each time step to 0. This value will later be edited as specific flow volumes for each time step are calculated
         Model['Inlet Water Temperature (deg F)'] = 0 #initialize the inlet temperature column with all 0's, to be filled in below
         First_Day = Draw_Profile.loc[0, 'Day of Year (Day)'] #Identifies the day (In integer relative to 365 form, not date form) of the first day of the draw profile
@@ -290,6 +290,16 @@ for current_profile in All_Variable_Dicts:
 
         Model['Ambient Temperature (deg F)'] = Temperature_Ambient #Sets the ambient temperature in the model equal to the value specified in INPUTS. This value could be replaced with a series of values
 
+        if Vary_CO2_Elec == True:
+            CO2_Column = CO2_Column_Title_Format.replace('[insert climate zone]',str(ClimateZone)) #Find the column name of CO2 cmultipliers for the currently used climate zone.
+            CO2_Output_Electricity = CO2_Elec[CO2_Column] #Create a new series holding the data for use
+            CO2_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton / kWh_In_MWh
+            CO2_Production_Rate_Electricity = CO2_Production_Rate_Electricity.rename_axis('CZ' + str(ClimateZone) + 'Electricity Long-Run Carbon Emission Factors (lb/kWh)')
+        #parameters may vary with each loop. create that ability here and alter the CO2 data used in the parameter set
+        Current_Loop_Parameters = Parameters.copy()
+        Current_Loop_Parameters[12] = CO2_Production_Rate_Electricity
+        print(Current_Loop_Parameters)
+
         #The following code simulates the performance of the gas HPWH
         #Initializes a bunch of values at either 0 or initial temperature. They will be overwritten later as needed
         Model['Tank Temperature (deg F)'] = 0
@@ -307,7 +317,7 @@ for current_profile in All_Variable_Dicts:
         Model['Hour of Year (hr)'] = (Model['Time (min)']/60).astype(int)
         Model['Electricity CO2 Multiplier (lb/kWh)'] = 0
 
-        Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP)
+        Model = GasHPWH.Model_GasHPWH_MixedTank(Model, Current_Loop_Parameters, Regression_COP)
 
         kWh_Dataframe.loc[ClimateZone,FloorArea_Conditioned] = Model['Electric Usage (W-hrs)'].sum()/1000 #get the annual electricity use of the equipment
         Therms_Dataframe.loc[ClimateZone,FloorArea_Conditioned] = Model['Gas Usage (Btu)'].sum()/100000 #get the annual gas use of the equipment
