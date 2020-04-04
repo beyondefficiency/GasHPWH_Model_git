@@ -60,8 +60,9 @@ import sys
 import time
 import GasHPWH_Model as GasHPWH
 from linetimer import CodeTimer
+from datetime import datetime
 
-Start_Time = time.time() #begin to time the script
+start_script_time = time.time() #begin to time the script
 
 #%%-------------------------GAS HPWH PARAMETERS-----------------------------------
 
@@ -102,6 +103,7 @@ Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes
 runs_limit = None # enter None if no limit...if you would like to limit the number of draw profiles the script runs (maybe for testing of the script so it doesnt take too long - enter that here)
 vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
 Vary_CO2_Elec = True #Enter True is reading the CO2 multipliers from a data file, enter False if using the CO2 multiplier specified above
+print_indv_to_file = False #True of False - do you want to print every individual model to file? Could be a lot.. otherwise the script will only print the summary tables.
 
 #there are two available base paths to use in the next two lines. uncomment the format you want and use it
 Path_DrawProfile_Base_Path = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'Draw_Profiles'
@@ -110,8 +112,11 @@ Path_DrawProfile_Base_Output_Path = os.path.dirname(__file__) + os.sep + 'Output
 output_prefix = 'OUTPUT_' #this will be appended to the beginning of each file run when saving the final individual results
 # Path_DrawProfile_Base_Output_Path = '/Users/nathaniltis/Dropbox (Beyond Efficiency)/Beyond Efficiency Team Folder/Frontier - Final Absorption HPWH Simulation Scripts/Comparison to Other WHs/Individual Outputs of Simulation Model'
 Path_Summary_Output = os.path.dirname(__file__) + os.sep + 'Output'
-Name_kWh_Summary_File = 'kWh_Usage_Summary_3.csv' #this file summarizes all the different profiles run
-Name_Therm_Summary_File = 'Therms_Usage_Summary_3.csv'  #this file summarizes all the different profiles run
+Date_Time_String = datetime.now().strftime("%m%d%y_%H%M")
+Name_kWh_Summary_File = 'kWh_Usage_Summary_' + Date_Time_String + '.csv' #this file summarizes all the different profiles run
+Name_Therm_Summary_File = 'Therms_Usage_Summary_' + Date_Time_String + '.csv'  #this file summarizes all the different profiles run
+Name_CO2_Gas_Summary_File = 'CO2_Gas_Usage_Summary_' + Date_Time_String + '.csv'  #this file summarizes all the different profiles run
+Name_CO2_Electricity_Summary_File = 'CO2_Electricity_Usage_Summary_' + Date_Time_String + '.csv'  #this file summarizes all the different profiles run
 
 if Vary_CO2_Elec == True: #If the user has elected to use time-varying CO2 multipliers this code will read the data set, identify the desired data, create a new data series containing the hourly multipliers for this simulation
     Folder_CO2_Elec = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'CO2' #Specify the folder where the electric CO2 data is located
@@ -135,17 +140,17 @@ Seconds_In_Minute = 60 #The number of seconds in a minute
 W_To_BtuPerHour = 3.412142 #Converting from Watts to Btu/hr
 K_To_F_MagnitudeOnly = 1.8/1. #Converting from K/C to F. Only applicable for magnitudes, not actual temperatures (E.g. Yes for "A temperature difference of 10 C" but not for "The water temperature is 40 C")
 Btu_In_Therm = 100000 #The number of Btus in a therm
-Pounds_In_MetricTon = 2204.62 #Pounds in a metric ton
-Pounds_In_Ton = 2000 #Pounds in a US ton
+Pounds_In_MetricTon = 2204.62 #Pounds / metric tonne
+Pounds_In_Ton = 2000 #Pounds / US ton
 kWh_In_MWh = 1000 #kWh in MWh
 
-#Calculating the NOx production rate of the HPWH when HP is active
+#Calculating the NOx production rate of the HPWH when HP is active (ng/min)
 NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
 
-#Calculating the CO2 production when the heat pump is active
+#Calculating the CO2 production when the heat pump... (lbs/min)
 CO2_Production_Rate_Gas = CO2_Output_Gas * FiringRate_HeatPump * W_To_BtuPerHour * (1/Minutes_In_Hour) * (1/Btu_In_Therm) * Pounds_In_MetricTon
 
-#Calculating the CO2 produced per kWh of electricity consumed
+#Calculating the CO2 produced (lbs/kWh) of electricity consumed
 #note that this object becomes a float if Vary_C02_Elec == False but is a dataframe series if it is True
 CO2_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton / kWh_In_MWh #if not varying CO2 rates
 
@@ -194,7 +199,9 @@ for each_dictionary in All_Variable_Dicts:
         sys.exit()
 
 kWh_Dataframe = pd.DataFrame(index = CZs, columns = CFAs) #set up a dataframe to store the outputs of each run
-Therms_Dataframe = kWh_Dataframe.copy() #set up a dataframe to store the outputs of each run
+Therms_Dataframe = kWh_Dataframe.copy() #set up a dataframe to store the kWh outputs of each run
+CO2_Gas_Dataframe = kWh_Dataframe.copy() #set up a dataframe to store the CO2 outputs of each run
+CO2_Electricity_Dataframe = kWh_Dataframe.copy() #set up a dataframe to store the CO2 outputs of each run
 count = 0
 
 #%%--------------------------MODELING-----------------------------------------
@@ -206,9 +213,11 @@ for current_profile in All_Variable_Dicts:
 
             kWh_Dataframe.to_csv(Path_Summary_Output + os.sep + Name_kWh_Summary_File)
             Therms_Dataframe.to_csv(Path_Summary_Output + os.sep + Name_Therm_Summary_File)
+            CO2_Gas_Dataframe.to_csv(Path_Summary_Output + os.sep + Name_CO2_Gas_Summary_File)
+            CO2_Electricity_Dataframe.to_csv(Path_Summary_Output + os.sep + Name_CO2_Electricity_Summary_File)
 
-            End_Time = time.time() #begin to time the script
-            print('script ran {0} draw profiles in {1} seconds'.format(count,(End_Time - Start_Time)/1000))
+            end_script_time = time.time() #stop timing the script
+            print('script ran {0} draw profiles in {1} seconds'.format(count,(end_script_time - start_script_time)))
 
             sys.exit()
 
@@ -298,7 +307,6 @@ for current_profile in All_Variable_Dicts:
         #parameters may vary with each loop. create that ability here and alter the CO2 data used in the parameter set
         Current_Loop_Parameters = Parameters.copy()
         Current_Loop_Parameters[12] = CO2_Production_Rate_Electricity
-        print(Current_Loop_Parameters)
 
         #The following code simulates the performance of the gas HPWH
         #Initializes a bunch of values at either 0 or initial temperature. They will be overwritten later as needed
@@ -321,15 +329,20 @@ for current_profile in All_Variable_Dicts:
 
         kWh_Dataframe.loc[ClimateZone,FloorArea_Conditioned] = Model['Electric Usage (W-hrs)'].sum()/1000 #get the annual electricity use of the equipment
         Therms_Dataframe.loc[ClimateZone,FloorArea_Conditioned] = Model['Gas Usage (Btu)'].sum()/100000 #get the annual gas use of the equipment
+        CO2_Gas_Dataframe.loc[ClimateZone,FloorArea_Conditioned] = Model['CO2 Production Gas (lb)'].sum() #get the annual CO2 use of the equipment in metric tonnes
+        CO2_Electricity_Dataframe.loc[ClimateZone,FloorArea_Conditioned] = Model['CO2 Production Elec (lb)'].sum() #get the annual CO2 use of the equipment
 
         #%%--------------------------WRITE RESULTS TO FILE-----------------------------------------
 
         # Model.to_csv(os.path.dirname(__file__) + os.sep + 'Output' + os.sep + 'Output.csv', index = False) #Save the model to the declared file. This should probably be replaced with a dynamic file name for later use in parametric simulations
-        Model.to_csv(Path_DrawProfile_Base_Output_Path + os.sep + output_prefix + current_profile, index = False)
+        if print_indv_to_file == True:
+            Model.to_csv(Path_DrawProfile_Base_Output_Path + os.sep + output_prefix + current_profile, index = False)
 
 kWh_Dataframe.to_csv(Path_Summary_Output + os.sep + Name_kWh_Summary_File)
 Therms_Dataframe.to_csv(Path_Summary_Output + os.sep + Name_Therm_Summary_File)
+CO2_Gas_Dataframe.to_csv(Path_Summary_Output + os.sep + Name_CO2_Gas_Summary_File)
+CO2_Electricity_Dataframe.to_csv(Path_Summary_Output + os.sep + Name_CO2_Electricity_Summary_File)
 
 #%%--------------------------TIMING--------------------------------
-End_Time = time.time() #mark end time of the script
-print('script ran{0} draw profiles in {1} seconds'.format(count,(End_Time - Start_Time)))
+end_script_time = time.time() #mark end time of the script
+print('script ran {0} draw profiles in {1} seconds'.format(count,(end_script_time - start_script_time)))
