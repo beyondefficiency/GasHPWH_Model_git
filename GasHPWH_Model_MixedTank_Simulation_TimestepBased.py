@@ -70,8 +70,8 @@ ST = time.time() #begin to time the script
 #These inputs are a series of constants describing the conditions of the simulation.
 #The constants describing the gas HPWH itself come from communications with Alex of GTI,
 #and may need to be updated if he sends new values
-Temperature_Tank_Initial = 115 #Deg F, initial temperature of water in the storage tank. 115 F is the standard set temperature in CBECC
-Temperature_Tank_Set = 115 #Deg F, set temperature of the HPWH. 115 F is the standard set temperature in CBECC
+Temperature_Tank_Initial = 125 #Deg F, initial temperature of water in the storage tank. 115 F is the standard set temperature in CBECC
+Temperature_Tank_Set = 125 #Deg F, set temperature of the HPWH. 115 F is the standard set temperature in CBECC
 Temperature_Tank_Set_Deadband = 15 #Deg F, deadband on the thermostat based on e-mail from Paul Glanville on Oct 31, 2019
 Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation
 Temperature_Ambient = 68 #deg F, temperature of the ambient air, placeholder for now
@@ -102,7 +102,7 @@ Path_DrawProfile_Output_Base_Path = os.path.dirname(__file__) + os.sep + 'Output
 Path_DrawProfile_Output_File_Name = 'Output_' + Filename_EPlusOutputData #Save the file with Output_ followed by the name of the draw profile
 Path_DrawProfile_Output = Path_DrawProfile_Output_Base_Path + os.sep + Path_DrawProfile_Output_File_Name
 
-vary_inlet_temp = False # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
+vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
 #COP regression calculations
