@@ -67,34 +67,34 @@ ST = time.time() #begin to time the script
 #%%--------------------------GAS HPWH PARAMETERS------------------------------
 
 #These inputs are a series of constants describing the conditions of the simulation.
-#The constants describing the gas HPWH itself come from communications with Alex of GTI,
-#and may need to be updated if he sends new values
+#The constants describing the gas HPWH itself come from communications with Alex and Paul of GTI,
+#and may need to be updated if they send new values
 Temperature_Tank_Initial = 115 #Deg F, initial temperature of water in the storage tank. 115 F is the standard set temperature in CBECC
 Temperature_Tank_Set = 115 #Deg F, set temperature of the HPWH. 115 F is the standard set temperature in CBECC
 Temperature_Tank_Set_Deadband = 10 #Deg F, deadband on the thermostat based on e-mail from Paul Glanville on Oct 31, 2019
-Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation
-Temperature_Ambient = 68 #deg F, temperature of the ambient air, placeholder for now
+Temperature_Water_Inlet = 40 #Deg F, inlet water temperature in this simulation. Note that this value is only used if vary_inlet_temp = False
+Temperature_Ambient = 68 #Deg F, temperature of the ambient air
 Volume_Tank = 65 #gal, volume of water held in the storage tank
 Coefficient_JacketLoss = 2.638 #W/K, Default value from Paul Glanville on Oct 31, 2019
 Power_Backup = 1250 #W, electricity consumption of the backup resistance elements
 Threshold_Activation_Backup = 95 #Deg F, backup element operates when tank temperature is below this threshold. Note that this operate at the same time as the heat pump
 Threshold_Deactivation_Backup = 105 #Deg F, sets the temperature when the backup element disengages after it has been engaged
-FiringRate_HeatPump = 2930.72 #W, heat consumed by the heat pump
+FiringRate_HeatPump = 2930.72 #W, natural gas consumption rate when the heat pump is active
 ElectricityConsumption_Active = 110 #W, electricity consumed by the fan when the heat pump is running
 ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
 NOx_Output = 10 #ng/J, NOx production of the HP when active
 CO2_Output_Gas = 0.0053 #metric tons/therm, CO2 production when gas absorption heat pump is active
-CO2_Output_Electricity = 0.212115 #ton/MWh, CO2 production when the HPWH consumes electricity. Default value is the average used in California
+CO2_Output_Electricity = 0.212115 #ton/MWh, CO2 production when the HPWH consumes electricity. Default value is the average used in California. Note that this value is only used if Vary_CO2_Elec = False
 Coefficient_COP = -0.0025 #The coefficient in the COP equation
 Constant_COP = 2.0341 #The constant in the COP equation
 
 #%%--------------------------USER INPUTS------------------------------------------
 # example full draw profile file name:
 # “Bldg=Single_CZ=1_Wat=Hot_Prof=1_SDLM=Yes_CFA=800_Inc=FSCDB_Ver=2019.csv”.
-WeatherSource = 'CA' #Type of weather file to use in the simulation. Currently, the script only supports CA
-Water = 'Hot' #specify whether the input profile is hot water only or mixed water
-SDLM = 'Yes' #'Yes or No' depending on whether the Standard Distribution Loss Multiplier is incorporated in the input draw profile
-Building_Type = 'Single' #Single or Multi depending on the building type of the draw profile being used
+WeatherSource = 'CA' #Type of weather file to use in the simulation. Currently, the script only supports CA weather files
+Water = 'Hot' #Specify whether the input profile is hot water ('Hot') only or mixed ('Mixed') water
+SDLM = 'Yes' #'Yes' or 'No' depending on whether the Standard Distribution Loss Multiplier is incorporated in the input draw profile
+Building_Type = 'Single' #'Single' or 'Multi' depending on the building type of the draw profile being used
 Bedrooms = 5 #Number of bedrooms used to create the draw profile. This number can range from 1 to 5
 FloorArea_Conditioned = 3500 #Conditioned floor area of the dwelling used in the draw profile creation
 ClimateZone = 1 #CA climate zone to use in the simulation
@@ -106,7 +106,7 @@ Timestep = 5 #Timestep to use in the draw profile and simulation, in minutes. Th
 vary_inlet_temp = True # enter False to fix inlet water temperature constant, and True to take the inlet water temperature from the draw profile file (to make it vary by climate zone)
 Vary_CO2_Elec = True #Enter True is reading the CO2 multipliers from a data file, enter False if using the CO2 multiplier specified above
 
-# there are two available base paths to use in the next two lines. uncomment the format you want and use it
+#There are two available base paths to use in the next two lines. uncomment the format you want and use it
 # Path_DrawProfile_Base_Path = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'Draw_Profiles' + os.sep
 Path_DrawProfile_Base_Path = os.path.dirname(__file__) + os.sep + 'Data' + os.sep + 'Draw_Profiles'
 Path_DrawProfile_File_Name = 'Bldg={0}_CZ={1}_Wat={2}_Prof={3}_SDLM={4}_CFA={5}_Inc={6}_Ver={7}.csv'.format(str(Building_Type),str(ClimateZone),str(Water),str(Bedrooms),str(SDLM),str(FloorArea_Conditioned),str(Include_Code),str(Version))
@@ -126,7 +126,7 @@ if Vary_CO2_Elec == True: #If the user has elected to use time-varying CO2 multi
 
 #%%---------------CONSTANT DECLARATIONS AND CALCULATIONS-----------------------
 #COP regression calculations
-Coefficients_COP = [Coefficient_COP, Constant_COP] #combines the coefficient and the constant into an array
+Coefficients_COP = [Coefficient_COP, Constant_COP] #Combines the coefficient and the constant into an array
 Regression_COP = np.poly1d(Coefficients_COP) #Creates a 1-d linear regression stating the COP of the heat pump as a function of the temperature of water in the tank
 
 #Constants used in water-based calculations
@@ -147,11 +147,11 @@ kWh_In_MWh = 1000 #kWh in MWh
 #Calculating the NOx production rate of the HPWH when HP is active  (ng/min)
 NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
 
-#Calculating the CO2 production when the heat pump is active ... (lbs/min)
+#Calculating the CO2 production from consuming gas when the heat pump is active (lbs/min)
 CO2_Production_Rate_Gas = CO2_Output_Gas * FiringRate_HeatPump * W_To_BtuPerHour * (1/Minutes_In_Hour) * (1/Btu_In_Therm) * Pounds_In_MetricTon
 
-#Calculating the CO2 produced (lbs/kWh) of electricity consumed
-#note that this object becomes a float if Vary_C02_Elec == False but is a dataframe series if it is
+#Calculating the CO2 produced (lbs/kWh) by electricity consumption
+#Note that this object becomes a float if Vary_C02_Elec == False but is a dataframe series if it is
 CO2_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton / kWh_In_MWh
 if Vary_CO2_Elec == True:
     CO2_Production_Rate_Electricity = CO2_Production_Rate_Electricity.rename_axis('CZ' + str(ClimateZone) + 'Electricity Long-Run Carbon Emission Factors (lb/kWh)')
@@ -162,8 +162,8 @@ else:
 
 #Converting quantities from SI units provided by Alex to (Incorrect, silly, obnoxious) IP units
 Coefficient_JacketLoss = Coefficient_JacketLoss * W_To_BtuPerHour * K_To_F_MagnitudeOnly #Converts Coefficient_JacketLoss from W/K to Btu/hr-F
-Power_Backup = Power_Backup * W_To_BtuPerHour #Btu/hr
-FiringRate_HeatPump = FiringRate_HeatPump * W_To_BtuPerHour #Btu/hr
+Power_Backup = Power_Backup * W_To_BtuPerHour #Converts to Btu/hr
+FiringRate_HeatPump = FiringRate_HeatPump * W_To_BtuPerHour #Converts to Btu/hr
 
 #Calculating the thermal mass of the water in the storage tank
 ThermalMass_Tank = Volume_Tank * Density_Water * SpecificHeat_Water
