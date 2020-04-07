@@ -144,13 +144,13 @@ Pounds_In_MetricTon = 2204.62 #Pounds in a metric ton
 Pounds_In_Ton = 2000 #Pounds in a US ton
 kWh_In_MWh = 1000 #kWh in MWh
 
-#Calculating the NOx production rate of the HPWH when HP is active
+#Calculating the NOx production rate of the HPWH when HP is active  (ng/min)
 NOx_Production_Rate = NOx_Output * FiringRate_HeatPump * Seconds_In_Minute
 
-#Calculating the CO2 production when the heat pump is active
+#Calculating the CO2 production when the heat pump is active ... (lbs/min)
 CO2_Production_Rate_Gas = CO2_Output_Gas * FiringRate_HeatPump * W_To_BtuPerHour * (1/Minutes_In_Hour) * (1/Btu_In_Therm) * Pounds_In_MetricTon
 
-#Calculating the CO2 produced per kWh of electricity consumed
+#Calculating the CO2 produced (lbs/kWh) of electricity consumed
 #note that this object becomes a float if Vary_C02_Elec == False but is a dataframe series if it is
 CO2_Production_Rate_Electricity = CO2_Output_Electricity * Pounds_In_Ton / kWh_In_MWh
 if Vary_CO2_Elec == True:
