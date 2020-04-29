@@ -45,9 +45,9 @@ def Model_GasHPWH_MixedTank(Model, Parameters, Regression_COP):
             / Minutes_In_Hour
             )
         # 5 - Calculate the energy change in the tank during the previous timestep
-        data[i, col_indx['Total Energy Change (Btu)']] = data[i, col_indx['Jacket Losses (Btu)']] + data[i, col_indx['Energy Withdrawn (Btu)']] + data[i, col_indx['Energy Added Backup (Btu)']] + data[i, col_indx['Energy Added Heat Pump (Btu)']]
-        # 6 - #Calculate the tank temperature during the final time step
+        data[i, col_indx['Total Energy Change (Btu)']] = data[i, col_indx['Jacket Losses (Btu)']] + data[i, col_indx['Energy Withdrawn (Btu)']] + data[i, col_indx['Energy Added Backup (Btu)']] + data[i, col_indx['Energy Added Heat Pump (Btu)']]        
         data[i, col_indx['Electricity CO2 Multiplier (lb/kWh)']] = Parameters[12][data[i, col_indx['Hour of Year (hr)']]]
+        # 6 - #Calculate the tank temperature during the final time step
         if i < len(data) - 1:
             data[i + 1, col_indx['Tank Temperature (deg F)']] = data[i, col_indx['Total Energy Change (Btu)']] / (Parameters[7]) + data[i, col_indx['Tank Temperature (deg F)']]
             

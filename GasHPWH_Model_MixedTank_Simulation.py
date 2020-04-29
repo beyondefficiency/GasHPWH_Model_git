@@ -83,7 +83,7 @@ FiringRate_HeatPump = 2930.72 #W, natural gas consumption rate when the heat pum
 ElectricityConsumption_Active = 110 #W, electricity consumed by the fan when the heat pump is running
 ElectricityConsumption_Idle = 5 #W, electricity consumed by the HPWH when idle
 NOx_Output = 10 #ng/J, NOx production of the HP when active
-CO2_Output_Gas = 0.0053 #metric tons/therm, CO2 production when gas absorption heat pump is active
+CO2_Output_Gas = 0.0053 #metric tons/therm, CO2 production when gas absorption heat pump is active. Taken from EPA Greenhouse Gases Equivalency Calculator
 CO2_Output_Electricity = 0.212115 #ton/MWh, CO2 production when the HPWH consumes electricity. Default value is the average used in California. Note that this value is only used if Vary_CO2_Elec = False
 Coefficient_COP = -0.0025 #The coefficient in the COP equation
 Constant_COP = 2.0341 #The constant in the COP equation
